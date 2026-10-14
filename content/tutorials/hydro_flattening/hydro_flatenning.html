@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Doug Newcomb &amp; Anna Petrasova">
+<meta name="dcterms.date" content="2025-09-15">
+<meta name="description" content="Learn how to do hydro-flattening of a DEM.">
+
+<title>Hydro-flattening a Digital Elevation Model – (Local) Learn GRASS</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../../images/favicon.ico" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-66c3c909b4863afd39f8c1a9684862f1.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-129134f29a76a6181c5c97a8655f1195.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-66c3c909b4863afd39f8c1a9684862f1.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-a5fd71da80d94be68a097476d4858793.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-a5fd71da80d94be68a097476d4858793.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-a5fd71da80d94be68a097476d4858793.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/quarto-contrib/fontawesome6-0.1.0/all.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-contrib/fontawesome6-0.1.0/latex-fontsize.css" rel="stylesheet">
+<script src="../../../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../../../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<meta property="og:title" content="Hydro-flattening a Digital Elevation Model – (Local) Learn GRASS">
+<meta property="og:description" content="Learn how to do hydro-flattening of a DEM.">
+<meta property="og:image" content="https://grass-tutorials.osgeo.org/content/tutorials/hydro_flattening/thumbnail.webp">
+<meta property="og:site_name" content="(Local) Learn GRASS">
+<meta name="twitter:title" content="Hydro-flattening a Digital Elevation Model – (Local) Learn GRASS">
+<meta name="twitter:description" content="Learn how to do hydro-flattening of a DEM.">
+<meta name="twitter:image" content="https://grass-tutorials.osgeo.org/content/tutorials/hydro_flattening/thumbnail.webp">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../../../images/logos/small/grass-logo-white-simple@05x.png" alt="Small sized GRASS icon colored white with GRASS shape" class="navbar-logo light-content">
+    <img src="../../../images/logos/small/grass-logo-green-simple@05x.png" alt="Small sized GRASS icon colored GRASS green with GRASS shape" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../../../index.html">
+    <span class="navbar-title">Learn GRASS</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+    <div class="dropdown">
+      <a href="" title="" id="quarto-navigation-tool-dropdown-0" class="quarto-navigation-tool dropdown-toggle px-1" data-bs-toggle="dropdown" aria-expanded="false" role="link" aria-label=""><i class="bi bi-github"></i></a>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quarto-navigation-tool-dropdown-0">
+          <li>
+            <a class="dropdown-item quarto-navbar-tools-item" href="https://github.com/OSGeo/grass-tutorials">
+            Source Code
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item quarto-navbar-tools-item" href="https://github.com/OSGeo/grass-tutorials/issues">
+            Report an Issue
+            </a>
+          </li>
+      </ul>
+    </div>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar"><div class="quarto-margin-header"><div class="margin-header-item">
+<p><a href="https://numfocus.org/donate-to-grass" class="btn btn-outline-support" role="button" data-align="center"><i class="fa-solid fa-heart" aria-label="heart"></i> Support GRASS</a></p>
+</div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of Contents</h2>
+   
+  <ul>
+  <li><a href="#what-is-hydro-flattening" id="toc-what-is-hydro-flattening" class="nav-link active" data-scroll-target="#what-is-hydro-flattening">What is hydro-flattening?</a>
+  <ul class="collapse">
+  <li><a href="#getting-ready" id="toc-getting-ready" class="nav-link" data-scroll-target="#getting-ready">Getting ready</a>
+  <ul class="collapse">
+  <li><a href="#download-data" id="toc-download-data" class="nav-link" data-scroll-target="#download-data">Download data</a></li>
+  <li><a href="#start-grass-and-create-a-new-project" id="toc-start-grass-and-create-a-new-project" class="nav-link" data-scroll-target="#start-grass-and-create-a-new-project">Start GRASS and create a new project</a></li>
+  <li><a href="#import-data" id="toc-import-data" class="nav-link" data-scroll-target="#import-data">Import data</a></li>
+  <li><a href="#download-orthoimagery" id="toc-download-orthoimagery" class="nav-link" data-scroll-target="#download-orthoimagery">Download orthoimagery</a></li>
+  <li><a href="#installing-r.hydro.flatten-addon" id="toc-installing-r.hydro.flatten-addon" class="nav-link" data-scroll-target="#installing-r.hydro.flatten-addon">Installing r.hydro.flatten addon</a></li>
+  </ul></li>
+  <li><a href="#hydro-flattening-lake-logan" id="toc-hydro-flattening-lake-logan" class="nav-link" data-scroll-target="#hydro-flattening-lake-logan">Hydro-flattening Lake Logan</a></li>
+  <li><a href="#adding-break-lines" id="toc-adding-break-lines" class="nav-link" data-scroll-target="#adding-break-lines">Adding break lines</a>
+  <ul class="collapse">
+  <li><a href="#creating-centerlines" id="toc-creating-centerlines" class="nav-link" data-scroll-target="#creating-centerlines">Creating centerlines</a></li>
+  <li><a href="#creating-river-transects" id="toc-creating-river-transects" class="nav-link" data-scroll-target="#creating-river-transects">Creating river transects</a></li>
+  <li><a href="#digitizing-dam" id="toc-digitizing-dam" class="nav-link" data-scroll-target="#digitizing-dam">Digitizing dam</a></li>
+  </ul></li>
+  <li><a href="#hydro-flattening-with-break-lines" id="toc-hydro-flattening-with-break-lines" class="nav-link" data-scroll-target="#hydro-flattening-with-break-lines">Hydro-flattening with break lines</a></li>
+  <li><a href="#export-to-geotiff" id="toc-export-to-geotiff" class="nav-link" data-scroll-target="#export-to-geotiff">Export to GeoTIFF</a></li>
+  </ul></li>
+  <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">Resources</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/OSGeo/grass-tutorials/edit/main/content/tutorials/hydro_flattening/hydro_flatenning.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/blob/main/content/tutorials/hydro_flattening/hydro_flatenning.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div><div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://doi.org/10.5281/zenodo.17121433"><i class="bi bi-filetype-pdf"></i>Detailed training material</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Hydro-flattening a Digital Elevation Model</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">Python</div>
+    <div class="quarto-category">intermediate</div>
+    <div class="quarto-category">terrain</div>
+    <div class="quarto-category">lidar</div>
+    <div class="quarto-category">GUI</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Learn how to do hydro-flattening of a DEM.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Doug Newcomb &amp; Anna Petrasova </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 15, 2025</p>
+    </div>
+  </div>
+  
+    <div>
+    <div class="quarto-title-meta-heading">Modified</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date-modified">October 14, 2026</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="what-is-hydro-flattening" class="level1">
+<h1>What is hydro-flattening?</h1>
+<p>Hydro-flattening is the process of modifying a digital elevation model (DEM) so that water surfaces—such as lakes, reservoirs, and wide rivers—appear flat and level, as they would on traditional topographic maps. This is essential for producing clean contour lines and realistic-looking terrain surfaces.</p>
+<p>When DEMs are created from lidar data, water surfaces often appear irregular or noisy. This happens because lidar points alone don’t define sharp edges like shorelines, and without breaklines to guide surface generation, the triangulation step connects points across waterbodies in unrealistic ways. The result is a DEM with unnatural ripples or slopes on water surfaces, which not only looks incorrect but also leads to poor-quality contours and artifacts in derived products. Hydro-flattening addresses this by incorporating breaklines that enforce flat, level water surfaces and preserve topographic realism. Read more <a href="https://www.usgs.gov/ngp-standards-and-specifications/lidar-base-specification-appendix-2-hydro-flattening-reference">at USGS website</a>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="triangles.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Example of no breaklines: Geomorphon Analysis of DEM in Roanoke Rapids Reservoir, NC 2014 DEM from QL2 data"><img src="triangles.webp" class="img-fluid figure-img" alt="Example of no breaklines: Geomorphon Analysis of DEM in Roanoke Rapids Reservoir, NC 2014 DEM from QL2 data"></a></p>
+<figcaption>Example of no breaklines: Geomorphon Analysis of DEM in Roanoke Rapids Reservoir, NC 2014 DEM from QL2 data</figcaption>
+</figure>
+</div>
+<p>In this tutorial, you’ll learn how to use GRASS to apply hydro-flattening techniques to lidar-derived DEMs using <a href="https://grass.osgeo.org/grass-stable/manuals/addons/r.hydro.flatten.html">r.hydro.flatten</a> addon following these steps:</p>
+<ul>
+<li>Create a mean ground raster data layer from lidar point cloud dataset.</li>
+<li>Install GRASS addons to extend functionality.</li>
+<li>Add an OGC Standard Web Map Service (WMS) to the GRASS Map Display</li>
+<li>Create flat elevation data and edge standard deviation data raster layers for all areas of ground point voids in the lidar point cloud.</li>
+<li>Create 2D vector break lines and river center lines using the GRASS vector editor.</li>
+<li>Create automatic river transects</li>
+<li>Create hydro-flattened river raster data for inclusion in a DEM</li>
+<li>Create a filled DEM layer combining the mean ground data, hydro-flattened data, and other interpolated data.</li>
+<li>Export the resulting data from a GRASS project to a GeoTIFF file.</li>
+</ul>
+<section id="getting-ready" class="level2">
+<h2 class="anchored" data-anchor-id="getting-ready">Getting ready</h2>
+<p>To get ready for the analysis, we will need to download lidar data, orthoimagery and install the r.hydro.flatten addon.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Don't know how to start using GRASS?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Don’t know how to start using GRASS?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If you are not sure how to download and get started with GRASS using its graphical user interface or using Python, checkout the tutorials <a href="../../../content/tutorials/get_started/fast_track.html">Get started with GRASS GUI</a> and <a href="../../../content/tutorials/get_started/fast_track_grass_and_python.html">Get started with GRASS &amp; Python in Jupyter Notebooks</a>.</p>
+</div>
+</div>
+<p>To create a raster surface from LiDAR point cloud data, GRASS must be compiled with the <a href="https://pdal.io/en/stable/">PDAL libraries</a>. This capability is currently only available on Linux and OSX platforms and will be available on Windows when GRASS switches to the cmake-based build system (in development). In the meantime, the mean ground raster surface needed for the hydroflattening portion of the tutorial can be created on Windows using the <a href="https://docs.qgis.org/3.40/en/docs/user_manual/processing_algs/qgis/pointclouddatamanagement.html#build-virtual-point-cloud-vpc">QGIS point cloud tools</a>. Create a virtual point cloud and then <a href="https://docs.qgis.org/3.40/en/docs/user_manual/processing_algs/qgis/pointcloudconversion.html#export-to-raster">export it to raster</a> (selecting classes 2,10,13 and setting the output resolution to 3.2808 ft).</p>
+<section id="download-data" class="level3">
+<h3 class="anchored" data-anchor-id="download-data">Download data</h3>
+<p>We will download lidar dataset from <a href="https://apps.nationalmap.gov/downloader/">USGS website</a>. Search for <em>Lake Logan, North Carolina</em> or use this bounding box:</p>
+<p>-82.933790°, 35.423316°<br>
+-82.922031°, 35.407718°</p>
+<p>Look for 2018 project lidar and download 6 lidar tiles as LAZ files. The coordinate reference system of the data is NAD83(2011) / North Carolina (ftUS) (<a href="https://spatialreference.org/ref/epsg/6543/">EPSG:6543</a>).</p>
+<p>Now create a text file (laslist.txt) with a list of the 6 downloaded file and include the full path, for example:</p>
+<pre class="text"><code>/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00862212_.laz
+/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00862320_.laz
+/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00863205_.laz
+/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00863209_.laz
+/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00863317_.laz
+/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00862208_.laz</code></pre>
+<p>We will use this file later on.</p>
+</section>
+<section id="start-grass-and-create-a-new-project" class="level3">
+<h3 class="anchored" data-anchor-id="start-grass-and-create-a-new-project">Start GRASS and create a new project</h3>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Command line</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false" href="">Python</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<p>If this is the first time you have opened GRASS you will see the default startup screen with a WGS84 world project. Click on the Create new project button on the left or look for <img src="../get_started/images/project-add.png" class="img-fluid" alt="Add project icon"> on the upper left.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_firstscreen.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Creating a new project in GUI"><img src="new_firstscreen.webp" class="img-fluid figure-img" alt="Creating a new project in GUI"></a></p>
+<figcaption>Creating a new project in GUI</figcaption>
+</figure>
+</div>
+<p>This will open a wizard where you:</p>
+<ol type="1">
+<li>provide a name for the new project (e.g., <em>nc6543</em>), click <em>Next</em></li>
+<li>specify <em>Select CRS from a list by EPSG or description</em>, click <em>Next</em></li>
+<li>find EPSG 6543 and select it from the list, click <em>Next</em></li>
+<li>select default datum transformation, click <em>Next</em></li>
+<li>see summary and click <em>Finish</em></li>
+</ol>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">grass</span> <span class="at">-c</span> EPSG:6543 /path/to/nc6543</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="tabset-1-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-3-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>gs.create_project(<span class="st">"/path/to/nc6543"</span>, epsg<span class="op">=</span><span class="st">"6543"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="import-data" class="level3">
+<h3 class="anchored" data-anchor-id="import-data">Import data</h3>
+<p>The next step is to import the ground point data from the 6 lidar tiles to create a seamless mean ground elevation layer at 1m resolution. The data is in NC State Plane Feet, so we will be using a conversion factor of 3.28084 to convert the feet to meters for the resolution.</p>
+<p>Fortunately, the GRASS tool <a href="https://grass.osgeo.org/grass-stable/manuals/r.in.pdal.html">r.in.pdal</a> automates several aspects of this process.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-2-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-1" role="tab" aria-controls="tabset-2-1" aria-selected="true" href="">GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-2" role="tab" aria-controls="tabset-2-2" aria-selected="false" href="">Command line</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-2-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-2-3" role="tab" aria-controls="tabset-2-3" aria-selected="false" href="">Python</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-2-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-2-1-tab">
+<p>Click on <em>File → Import Raster Data → Point cloud (LAS LiDAR) import</em>.</p>
+<p>This will bring up the r.in.pdal dialog, that has multiple tabs that allow for several parameters for processing the point cloud data into a 2D raster.</p>
+<ul>
+<li>Input: for the <em>file</em> option browse to the <em>laslist.txt</em>.</li>
+<li>Output: check the boxes for <em>Use the extent of the input for the raster extent</em>, and <em>Set computation region to match the new raster map</em>. Type in <code>lake_logan_1m</code> for the <em>Name for the output raster map</em>. Type in 3.28084 for the <em>Output raster resolution</em> (the desired cell size is 1 meter).</li>
+<li>Statistic: keep <em>mean</em>, this means that for the points that fall in each cell, the mean Z value will be calculated and set as the cell value.</li>
+<li>Selection: input <em>2,10,13</em> in the <em>Only import points of selected classes</em> field. Class 2 is ground, class 13 are roads and class 10 was used to designate ground points that were within 1 meter of 3D break lines for water bodies. These classes will get us the complete ground point dataset.</li>
+<li>Projection: check <em>Reproject to project’s coordinate system if needed</em>.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_rinpdalinput.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="r.in.pdal Input tab"><img src="new_rinpdalinput.webp" class="img-fluid figure-img" alt="r.in.pdal Input tab"></a></p>
+<figcaption>r.in.pdal Input tab</figcaption>
+</figure>
+</div>
+<p>Now press run and wait. You should see the layer added to the map, if you don’t see it, right click on the layer and select <em>Zoom to selected map(s)</em>. From the same context menu you can select <em>Metadata</em> to see number of cells, CRS information, extent, range of values and other info.</p>
+</div>
+<div id="tabset-2-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">r.in.pdal</span> <span class="at">-e</span> <span class="at">-n</span> <span class="at">-w</span> file=/path/to/lidar/laslist.txt output=lake_logan_1m resolution=3.28084 class_filter=2,10,13</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">r.info</span> map=lake_logan_1m</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="tabset-2-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-2-3-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.in.pdal"</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="st">"enw"</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">file</span><span class="op">=</span><span class="st">"/path/to/lidar/laslist.txt"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"lake_logan_1m"</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    resolution<span class="op">=</span><span class="fl">3.28084</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    class_filter<span class="op">=</span>[<span class="dv">2</span>, <span class="dv">10</span>, <span class="dv">13</span>],</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(gs.read_command(<span class="st">"r.info"</span>, <span class="bu">map</span><span class="op">=</span><span class="st">"lake_logan_1m"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="newmeangroundlegend_anna.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Ground points processed into a raster, elevation is in feet"><img src="newmeangroundlegend_anna.webp" class="img-fluid figure-img" alt="Ground points processed into a raster, elevation is in feet"></a></p>
+<figcaption>Ground points processed into a raster, elevation is in feet</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Overwriting data">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Overwriting data
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>By default, GRASS prevents overwriting existing maps to protect your data, so you need to explicitly allow overwriting when re-running analyses or generating outputs with the same name. In a tool dialog, check <em>Allow output files to overwrite existing files</em>. In command line, use <code>--o</code>, and in Python, use <code>overwrite=True</code>.</p>
+</div>
+</div>
+</section>
+<section id="download-orthoimagery" class="level3">
+<h3 class="anchored" data-anchor-id="download-orthoimagery">Download orthoimagery</h3>
+<p>The State of North Carolina has a program to collect aerial imagery on a 4 year cycle. The most current data set for this location is from 2023. The URL to access the WMS data set is <code>https://services.gis.nc.gov/secure/services/Imagery/Orthoimagery_2023/ImageServer/WMSServer</code>.</p>
+<p>Data is also available for 2019, 2015, and 2010, just substitute those years for 2023 in the URL above if you wish to review those years.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-3-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-1" role="tab" aria-controls="tabset-3-1" aria-selected="true" href="">GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-2" role="tab" aria-controls="tabset-3-2" aria-selected="false" href="">Command line</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-3-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-3-3" role="tab" aria-controls="tabset-3-3" aria-selected="false" href="">Python</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-3-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-3-1-tab">
+<p>To display it, add web service layer:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="addwms.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Add WMS layer in GUI"><img src="addwms.webp" class="img-fluid figure-img" alt="Add WMS layer in GUI"></a></p>
+<figcaption>Add WMS layer in GUI</figcaption>
+</figure>
+</div>
+<p>and paste the URL into the <em>Server settings</em> text box and press <em>Connect</em>. Select the newly populated layer <em>Orthoimagery (2023)</em>. Select <em>Source projection</em> EPSG:6543 to match your project’s CRS for faster response. Also select the jpeg radio button in the <em>Source image format</em>.</p>
+<p>To remember the URL, click on the <em>Save</em> button on the top of the dialog and enter a descriptive name to quickly recall the image service between sessions.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="wmsdialog.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="WMS dialog"><img src="wmsdialog.webp" class="img-fluid figure-img" alt="WMS dialog"></a></p>
+<figcaption>WMS dialog</figcaption>
+</figure>
+</div>
+<p>Click <em>Add layer</em>. Your GUI should now have <em>Orthoimagery (2023)</em> listed as one of the layers. Uncheck the orthoimagery layer and zoom into one of the void areas to the left of the lake. Once you have zoomed in, check the orthoimagery layer and see what the void represents.</p>
+</div>
+<div id="tabset-3-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">r.in.wms</span> layers=0 output=ortho srs=6543 url=https://services.gis.nc.gov/secure/services/Imagery/Orthoimagery_2023/ImageServer/WMSServer</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="tabset-3-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-3-3-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.in.wms"</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    layers<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"ortho"</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    srs<span class="op">=</span><span class="st">"6543"</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    url<span class="op">=</span><span class="st">"https://services.gis.nc.gov/secure/services/Imagery/Orthoimagery_2023/ImageServer/WMSServer"</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="imagery.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Orthoimagery 2023"><img src="imagery.webp" class="img-fluid figure-img" alt="Orthoimagery 2023"></a></p>
+<figcaption>Orthoimagery 2023</figcaption>
+</figure>
+</div>
+</section>
+<section id="installing-r.hydro.flatten-addon" class="level3">
+<h3 class="anchored" data-anchor-id="installing-r.hydro.flatten-addon">Installing r.hydro.flatten addon</h3>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-4-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-1" role="tab" aria-controls="tabset-4-1" aria-selected="true" href="">GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-2" role="tab" aria-controls="tabset-4-2" aria-selected="false" href="">Command line</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-4-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-4-3" role="tab" aria-controls="tabset-4-3" aria-selected="false" href="">Python</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-4-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-4-1-tab">
+<div class="grid">
+<div class="g-col-6">
+<p>GRASS Addons are installed in the GUI with <em>Addons extensions→ Install extensions from addons</em>. In the dialog, search for the addon and <em>Install</em>.</p>
+<p>At this point, you could run r.hydro.flatten from the command line, but it would be easier going forward if the command was integrated into the Tools tab. Restarting GRASS will automatically load the r.hydro.flatten tool in the Addons portion of the Tools tab. In the quit confirmation dialog click on <em>Quit GRASS</em>. The store curent settings dialog will then pop up, select <em>No</em>. Start GRASS again. You should now see an Addons option in the Tools tab with r.hydro.flatten listed there. Double click on r.hydro.flatten tool to open a dialog.</p>
+</div>
+<div class="g-col-6">
+<p><a href="new_install_hydroflatten.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="new_install_hydroflatten.webp" class="img-fluid"></a></p>
+</div>
+</div>
+</div>
+<div id="tabset-4-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">g.extension</span> extension=r.hydro.flatten</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="tabset-4-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-4-3-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>gs.run_command(<span class="st">"g.extension"</span>, extension<span class="op">=</span><span class="st">"r.hydro.flatten"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="hydro-flattening-lake-logan" class="level2">
+<h2 class="anchored" data-anchor-id="hydro-flattening-lake-logan">Hydro-flattening Lake Logan</h2>
+<p>Now we are ready to compute the hydro-flattened DEM. The r.hydro.flatten addon will calculate the estimated elevations of the voids from the 14th percentile of the edge values of each void in the ground point data and the standard deviation of the edge values around each void.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-5-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-1" role="tab" aria-controls="tabset-5-1" aria-selected="true" href="">GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-2" role="tab" aria-controls="tabset-5-2" aria-selected="false" href="">Command line</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-5-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-5-3" role="tab" aria-controls="tabset-5-3" aria-selected="false" href="">Python</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-5-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-5-1-tab">
+<p>In the r.hydro.flatten dialog, set the following input and output values:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_rihydroflatten1.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Required tab of r.hydro.flatten dialog"><img src="new_rihydroflatten1.webp" class="img-fluid figure-img" alt="Required tab of r.hydro.flatten dialog"></a></p>
+<figcaption>Required tab of r.hydro.flatten dialog</figcaption>
+</figure>
+</div>
+</div>
+<div id="tabset-5-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">r.hydro.flatten</span> input=lake_logan_1m water_elevation=lake_logan_1m_wat_elev water_elevation_stddev=lake_logan_1m_wat_stddev percentile=14</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="tabset-5-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-5-3-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.hydro.flatten"</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    water_elevation<span class="op">=</span><span class="st">"lake_logan_1m_wat_elev"</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    water_elevation_stddev<span class="op">=</span><span class="st">"lake_logan_1m_wat_stddev"</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    percentile<span class="op">=</span><span class="dv">14</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<p>Let’s inspect the newly created <em>lake_logan_1m_wat_stddev</em> raster that represents the standard deviation of elevation values along the edge of the water bodies. As you can see, the pond below the dam has such a low value that it is almost white. This means the hydro-flattening tool successfully flattened the pond surface.</p>
+<p>However, the river upstream of the main lake (southwest), the lake, and the river downstream of the lake (northeast) all seem to have the same color. This happens because the elevation is calculated based on edge values, and the edges of the river and lake are treated as one continuous surface.</p>
+<p>To improve accuracy, we need to interrupt that continuity by drawing 2D break lines in a vector layer—one where the river flows into the lake and another at the dam.</p>
+<p>Since rivers are not perfectly level like lakes or ponds, we also need to add transects—short cross-sections—along the river. These help capture gradual changes in elevation along the flow direction and ensure a more realistic representation of the river surface.</p>
+</div>
+<div class="g-col-6">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="stddev_nobreaklines.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Standard deviation of elevation along water bodies"><img src="stddev_nobreaklines.webp" class="img-fluid figure-img" alt="Standard deviation of elevation along water bodies"></a></p>
+<figcaption>Standard deviation of elevation along water bodies</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="adding-break-lines" class="level2">
+<h2 class="anchored" data-anchor-id="adding-break-lines">Adding break lines</h2>
+<p>We will manually add a break line to separate the lake from the river on both sides.</p>
+<p>Additionally, we will digitize a centerline representing the river and create transects in an automated way by using <a href="https://grass.osgeo.org/grass-stable/manuals/addons/v.transects.html">v.transects</a> tool.</p>
+<section id="creating-centerlines" class="level3">
+<h3 class="anchored" data-anchor-id="creating-centerlines">Creating centerlines</h3>
+<ol type="1">
+<li><p>We will start a <a href="https://grass.osgeo.org/grass-stable/manuals/wxGUI.vdigit.html">vector digitizer</a> from the <a href="https://grass.osgeo.org/grass-stable/manuals/wxGUI.html#map-display-toolbar">Map Display toolbar</a> (combo box at the end of the toolbar).</p></li>
+<li><p>When the digitizer toolbar appears, <a href="https://grass.osgeo.org/grass-stable/manuals/wxGUI.vdigit.html#creating-a-new-vector-map">select</a> <em>New vector map</em> and type a name for it, such as <em>centerlines</em>. Create it and then you can close the newly opened attribute manager dialog, we won’t need it.</p></li>
+<li><p>Now start digitizing a centerline, it doesn’t have to be perfect. Select <em>Digitize new line</em> tool from the <a href="https://grass.osgeo.org/grass-stable/manuals/wxGUI.vdigit.html#digitizer-toolbar">toolbar</a> and start digitizing from the edge with right click. To end line, use left click. Do it for both segments of the river. Quit digitizer.</p></li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_centerline_digitized.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Digitized centerline"><img src="new_centerline_digitized.webp" class="img-fluid figure-img" alt="Digitized centerline"></a></p>
+<figcaption>Digitized centerline</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Automated centerlines">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Automated centerlines
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For longer river segments you can use <a href="https://grass.osgeo.org/grass-stable/manuals/addons/v.centerline.html">v.centerline</a> for automated centerline generation.</p>
+</div>
+</div>
+</section>
+<section id="creating-river-transects" class="level3">
+<h3 class="anchored" data-anchor-id="creating-river-transects">Creating river transects</h3>
+<p>Install <a href="https://grass.osgeo.org/grass-stable/manuals/addons/v.transects.html">v.transects</a> addon in the same way as we installed the r.hydro.flatten one.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-6-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-1" role="tab" aria-controls="tabset-6-1" aria-selected="true" href="">GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-2" role="tab" aria-controls="tabset-6-2" aria-selected="false" href="">Command line</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-6-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-6-3" role="tab" aria-controls="tabset-6-3" aria-selected="false" href="">Python</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-6-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-6-1-tab">
+<p>In the GUI dialog set the following values:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_vtransect_1.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Required tab"><img src="new_vtransect_1.webp" class="img-fluid figure-img" alt="Required tab"></a></p>
+<figcaption>Required tab</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_vtransect_options.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="Optional tab"><img src="new_vtransect_options.webp" class="img-fluid figure-img" alt="Optional tab"></a></p>
+<figcaption>Optional tab</figcaption>
+</figure>
+</div>
+</div>
+<div id="tabset-6-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">v.transects</span> input=centerlines output=centerlines_120_trans transect_spacing=120 dleft=60 dright=60 metric=along transect_perpendicular=line <span class="at">-l</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="tabset-6-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-6-3-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"v.transects"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"centerlines"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"centerlines_120_trans"</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    transect_spacing<span class="op">=</span><span class="dv">120</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    dleft<span class="op">=</span><span class="dv">60</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    dright<span class="op">=</span><span class="dv">60</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"along"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    transect_perpendicular<span class="op">=</span><span class="st">"line"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="st">"l"</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<p>Once the output transect layer is added to the Layers panel you will see the transects generated on the Map Display. You will note that some of the transect do not exactly line up with the shoreline correctly. Right click on the transect vector layer and select <em>Start editing</em> to bring up the vector editing toolbar. Select the <em>Move selected vertex</em> tool and use it to select and move the ends of the line to line up correctly. (Left click to select, left click to select new location, right click to complete move.)</p>
+<p><a href="new_move_selected_vertex_tool.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="new_move_selected_vertex_tool.webp" class="img-fluid"></a></p>
+</div>
+<div class="g-col-6">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="transects.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Layers centerlines and centerlines_120_trans"><img src="transects.webp" class="img-fluid figure-img" alt="Layers centerlines and centerlines_120_trans"></a></p>
+<figcaption>Layers <em>centerlines</em> and <em>centerlines_120_trans</em></figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="digitizing-dam" class="level3">
+<h3 class="anchored" data-anchor-id="digitizing-dam">Digitizing dam</h3>
+<p>We will continue digitizing the <em>centerlines_120_trans</em> layer by adding breaklines on both sides of the dam.</p>
+<p>Zoom in to the north side of the lake where you see the semicircle of the dam, and click on the add line tool in the toolbar. In the orthophoto, you can see the dam line at the top of the dam. The first transect is placed at approximately the downstream edge of the plunge pool below the dam. It’s probably a good idea to put a break line at the base of the dam as well. Digitize the line along where you see the dam structure meet the water and save it.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_damwaterline.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-16" title="Digitizing the dam"><img src="new_damwaterline.webp" class="img-fluid figure-img" alt="Digitizing the dam"></a></p>
+<figcaption>Digitizing the dam</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="hydro-flattening-with-break-lines" class="level2">
+<h2 class="anchored" data-anchor-id="hydro-flattening-with-break-lines">Hydro-flattening with break lines</h2>
+<p>Let’s re-run r.hydro.flatten with the created break lines. This time, use <em>centerlines_120_trans</em> as your input vector layer and output resulting raster with filled DEM.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-7-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-1" role="tab" aria-controls="tabset-7-1" aria-selected="true" href="">GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-2" role="tab" aria-controls="tabset-7-2" aria-selected="false" href="">Command line</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-7-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-7-3" role="tab" aria-controls="tabset-7-3" aria-selected="false" href="">Python</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-7-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-7-1-tab">
+<p>In the GUI dialog set the following values in the Optional tab. In the Required tab, add <em>_2dbreak</em> to the output names.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_hydrofaltten_2D_trans.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-17" title="Optional tab"><img src="new_hydrofaltten_2D_trans.webp" class="img-fluid figure-img" alt="Optional tab"></a></p>
+<figcaption>Optional tab</figcaption>
+</figure>
+</div>
+</div>
+<div id="tabset-7-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">r.hydro.flatten</span> input=lake_logan_1m water_elevation=lake_logan_1m_wat_elev_2dbreak water_elevation_stddev=lake_logan_1m_wat_stddev_2dbreak percentile=14 breaklines=centerlines_120_trans filled_elevation=lake_logan_1m_filled_DEM</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="tabset-7-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-7-3-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.hydro.flatten"</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m"</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    water_elevation<span class="op">=</span><span class="st">"lake_logan_1m_wat_elev_2dbreak"</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    water_elevation_stddev<span class="op">=</span><span class="st">"lake_logan_1m_wat_stddev_2dbreak"</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    percentile<span class="op">=</span><span class="dv">14</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    breaklines<span class="op">=</span><span class="st">"centerlines_120_trans"</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    filled_elevation<span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM"</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<p>Looking at the new standard deviation layer you will see that the lake and river are very light, indicating that the edge values for the lake and most of the river sections have relatively low standard deviation values.</p>
+<p>There is a red spot in the top center of the study area. If you look at the area on the orthoimagery, you see dense evergreen vegetation. This is an area with a substantial void in the ground points that is not water. We don’t want this area to be flat, rather we will properly interpolate it.</p>
+<p>To avoid filling areas with standard deviation higher than a certain value, we will re-run r.hydro.flatten with parameter <strong>max_stddev</strong> and then fill those values with <a href="https://grass.osgeo.org/grass-stable/manuals/r.fillnulls.html">r.fillnulls</a>.</p>
+</div>
+<div class="g-col-6">
+<p><a href="stddev_breaklines.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-18"><img src="stddev_breaklines.webp" class="img-fluid"></a></p>
+</div>
+</div>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-8-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-1" role="tab" aria-controls="tabset-8-1" aria-selected="true" href="">GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-2" role="tab" aria-controls="tabset-8-2" aria-selected="false" href="">Command line</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-8-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-8-3" role="tab" aria-controls="tabset-8-3" aria-selected="false" href="">Python</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-8-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-8-1-tab">
+<p>Re-run the r.hydro.flatten with parameter <strong>max_stddev=5</strong> to avoid flattening areas with standard deviation greater than 5. Name the resulting layer <em>lake_logan_1m_filled_DEM_null_above_5_stddev</em>.</p>
+<div class="grid">
+<div class="g-col-6">
+<p>Then find <a href="https://grass.osgeo.org/grass-stable/manuals/r.fillnulls.html">r.fillnulls</a> tool in menu <em>Raster → Interpolate surfaces → Fill NULL cells</em> and call r.fillnulls with input layer <em>lake_logan_1m_filled_DEM</em>, output layer <em>lake_logan_1m_filled_DEM_fillnulls</em> and keep the rest with the default values.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_rfillnulls_dialog1.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-19" title="r.fillnulls dialog"><img src="new_rfillnulls_dialog1.webp" class="img-fluid figure-img" alt="r.fillnulls dialog"></a></p>
+<figcaption>r.fillnulls dialog</figcaption>
+</figure>
+</div>
+</div>
+<div class="g-col-6">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="new_rfillnulls.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-20" title="Open r.fillnulls dialog"><img src="new_rfillnulls.webp" class="img-fluid figure-img" alt="Open r.fillnulls dialog"></a></p>
+<figcaption>Open r.fillnulls dialog</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Finally, run <a href="https://grass.osgeo.org/grass-stable/manuals/r.relief.html">r.relief</a> to see the resulting topography.</p>
+</div>
+<div id="tabset-8-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">r.hydro.flatten</span> input=lake_logan_1m water_elevation=lake_logan_1m_wat_elev_2dbreak water_elevation_stddev=lake_logan_1m_wat_stddev_2dbreak percentile=14 breaklines=centerlines_120_trans filled_elevation=lake_logan_1m_filled_DEM_null_above_5_stddev max_stddev=5</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="ex">r.fillnulls</span> input=lake_logan_1m_filled_DEM_null_above_5_stddev output=lake_logan_1m_filled_DEM_final method=rst</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ex">r.relief</span> input=lake_logan_1m_filled_DEM_final output=relief</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="tabset-8-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-8-3-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.hydro.flatten"</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m"</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    water_elevation<span class="op">=</span><span class="st">"lake_logan_1m_wat_elev_2dbreak"</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    water_elevation_stddev<span class="op">=</span><span class="st">"lake_logan_1m_wat_stddev_2dbreak"</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    percentile<span class="op">=</span><span class="dv">14</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    breaklines<span class="op">=</span><span class="st">"centerlines_120_trans"</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    filled_elevation<span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_null_above_5_stddev"</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    max_stddev<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.fillnulls"</span>,</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_null_above_5_stddev"</span>,</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_final"</span>,</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span><span class="st">"rst"</span>,</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>gs.run_command(<span class="st">"r.relief"</span>, <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_final"</span>, output<span class="op">=</span><span class="st">"relief"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-4">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="before_fillnuls.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-21" title="Hydroflattened DEM before r.fillnulls"><img src="before_fillnuls.webp" class="img-fluid figure-img" alt="Hydroflattened DEM before r.fillnulls"></a></p>
+<figcaption>Hydroflattened DEM before r.fillnulls</figcaption>
+</figure>
+</div>
+</div>
+<div class="g-col-4">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="relief.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-22" title="Shaded relief of the final hydro-flattened and filled DEM"><img src="relief.webp" class="img-fluid figure-img" alt="Shaded relief of the final hydro-flattened and filled DEM"></a></p>
+<figcaption>Shaded relief of the final hydro-flattened and filled DEM</figcaption>
+</figure>
+</div>
+</div>
+<div class="g-col-4">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="relief_zoom.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-23" title="Zoomed-in on the dam and river segment"><img src="relief_zoom.webp" class="img-fluid figure-img" alt="Zoomed-in on the dam and river segment"></a></p>
+<figcaption>Zoomed-in on the dam and river segment</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="export-to-geotiff" class="level2">
+<h2 class="anchored" data-anchor-id="export-to-geotiff">Export to GeoTIFF</h2>
+<p>The last step is to export the filled DEM to the open standard GeoTIFF file format.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset" data-group="language">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-9-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-1" role="tab" aria-controls="tabset-9-1" aria-selected="true" href="">GUI</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-2" role="tab" aria-controls="tabset-9-2" aria-selected="false" href="">Command line</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-9-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-9-3" role="tab" aria-controls="tabset-9-3" aria-selected="false" href="">Python</a></li></ul>
+<div class="tab-content" data-group="language">
+<div id="tabset-9-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-9-1-tab">
+<p>Right click on the filled DEM layer (<em>lake_logan_1m_filled_DEM_final</em>) and select <em>Export</em>. This will bring up the <a href="https://grass.osgeo.org/grass-stable/manuals/r.out.gdal.html">r.out.gdal</a> dialog.</p>
+<p>Click on the browse button next to the <em>Name for output raster file</em> option to browse to the directory where you want the geotiff file to be written. Keep the default file format as GTiff (GeoTIFF).</p>
+<p><a href="new_routgdal1.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-24"><img src="new_routgdal1.webp" class="img-fluid"></a></p>
+<p>Click on the <em>Creation</em> tab. On this tab you can select the <em>Data type</em> and compression level for the output image. From the Data type drop-down select <em>Float64</em>.</p>
+<p>Then go to the <em>Creation option(s) to pass to the output format driver</em> section. The different options for writing out a GeoTIFF raster can be found at the <a href="https://gdal.org/en/latest/drivers/raster/gtiff.html">GDAL GeoTiff format description page</a>. Type in “compress=deflate,predictor=3”. Click Run.</p>
+</div>
+<div id="tabset-9-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-2-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">r.out.gdal</span> input=lake_logan_1m_filled_DEM_final output=lake_logan_1m_filled_DEM_final.tif format=GTiff type=Float64 createopt=<span class="st">"compress=deflate,predictor=3"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="tabset-9-3" class="tab-pane" role="tabpanel" aria-labelledby="tabset-9-3-tab">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.out.gdal"</span>,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_final"</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_final.tif"</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">format</span><span class="op">=</span><span class="st">"GTiff"</span>,</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span><span class="op">=</span><span class="st">"Float64"</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    createopt<span class="op">=</span><span class="st">"compress=deflate,predictor=3"</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Compression and large datasets">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Compression and large datasets
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Deflate compression is the most recognized lossless compression for GeoTIFFs. It is supported by other software and is relatively fast for reads. The predictor option allows the deflate compression to be more efficient. You can leave the GeoTIFFs uncompressed, but the file size will be about 4 times larger than the deflate compressed version. This difference adds up as you scale this process up to larger data sets.</p>
+<p>For GeoTIFFs larger than 4GB, you will need to use the BIGTIFF=YES option to successfully write an output raster. You may want to also add the num_threads=4 to enable the multi-threaded writing option as well.</p>
+</div>
+</div>
+<p><a href="thumbnail.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-25"><img src="thumbnail.webp" class="img-fluid"></a></p>
+<p>Congratulations! You have completed this tutorial! <i class="fa-solid fa-rocket" aria-label="rocket"></i></p>
+</section>
+</section>
+<section id="resources" class="level1">
+<h1>Resources</h1>
+<p>Newcomb, D. (2025). A Tutorial on Modeling Water Voids in Airborne LiDAR Point Cloud Data to Hydroflatten Water Surfaces in Digital Elevation Models. Zenodo. <a href="https://doi.org/10.5281/zenodo.17121432">https://doi.org/10.5281/zenodo.17121432</a></p>
+<hr>
+<div class="smaller">
+<p>The development of this tutorial was in part funded by the US <a href="https://www.nsf.gov/">National Science Foundation (NSF)</a>, award <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=2303651">2303651</a>.</p>
+</div>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/grass-tutorials\.osgeo\.org");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Hydro-flattening a Digital Elevation Model"</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Doug Newcomb &amp; Anna Petrasova"</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> 2025-09-15</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="an">date-modified:</span><span class="co"> today</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="an">lightbox:</span><span class="co"> true</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="an">image:</span><span class="co"> thumbnail.webp</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co">    other-links:</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="co">    - text: "Detailed training material"</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="co">      href: "https://doi.org/10.5281/zenodo.17121433"</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="co">      icon: filetype-pdf</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: false</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Python, intermediate, terrain, lidar, GUI]</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> Learn how to do hydro-flattening of a DEM.</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> knitr</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="co">  code-copy: true</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="co">  eval: false</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a><span class="fu"># What is hydro-flattening?</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>Hydro-flattening is the process of modifying a digital elevation model (DEM) so that water surfaces—such as lakes, reservoirs, and wide rivers—appear flat and level, as they would on traditional topographic maps. This is essential for producing clean contour lines and realistic-looking terrain surfaces.</span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>When DEMs are created from lidar data, water surfaces often appear irregular or noisy.</span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>This happens because lidar points alone don’t define sharp edges like shorelines, and without breaklines to guide surface generation, the triangulation step connects points across waterbodies in unrealistic ways.</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>The result is a DEM with unnatural ripples or slopes on water surfaces, which not only looks incorrect but also leads to poor-quality contours and artifacts in derived products.</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>Hydro-flattening addresses this by incorporating breaklines that enforce flat, level water surfaces and preserve topographic realism.</span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>Read more <span class="co">[</span><span class="ot">at USGS website</span><span class="co">](https://www.usgs.gov/ngp-standards-and-specifications/lidar-base-specification-appendix-2-hydro-flattening-reference)</span>.</span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a><span class="al">![Example of no breaklines: Geomorphon Analysis of DEM in Roanoke Rapids Reservoir, NC 2014 DEM from QL2 data](triangles.webp)</span></span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>In this tutorial, you’ll learn how to use GRASS to apply hydro-flattening techniques to lidar-derived DEMs</span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>using <span class="co">[</span><span class="ot">r.hydro.flatten</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/addons/r.hydro.flatten.html)</span> addon</span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>following these steps:</span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create a mean ground raster data layer from lidar point cloud dataset.</span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Install GRASS addons to extend functionality.</span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Add an OGC Standard Web Map Service (WMS) to the GRASS Map Display</span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create flat elevation data and edge standard deviation data raster layers for all areas of ground point voids in the lidar point cloud.</span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create 2D vector break lines and river center lines using the GRASS vector editor.</span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create automatic river transects</span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create hydro-flattened river raster data for inclusion in a DEM</span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Create a filled DEM layer combining the mean ground data, hydro-flattened data, and other interpolated data.</span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Export the resulting data from a GRASS project to a GeoTIFF file.</span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a><span class="fu">## Getting ready</span></span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>To get ready for the analysis, we will need to download lidar data, orthoimagery and install the r.hydro.flatten addon.</span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title="Don't know how to start using GRASS?"}</span>
+<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a>If you are not sure how to download and get started with GRASS using its graphical user interface or using Python, checkout the tutorials <span class="co">[</span><span class="ot">Get started with GRASS GUI</span><span class="co">](../get_started/fast_track.qmd)</span> and <span class="co">[</span><span class="ot">Get started with GRASS &amp; Python in Jupyter Notebooks</span><span class="co">](../get_started/fast_track_grass_and_python.qmd)</span>.</span>
+<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a>To create a raster surface from LiDAR point cloud data, GRASS must be compiled with the <span class="co">[</span><span class="ot">PDAL libraries</span><span class="co">](https://pdal.io/en/stable/)</span>. This capability is currently only available on Linux and OSX platforms and will be available on Windows when GRASS switches to the cmake-based build system (in development). In the meantime, the mean ground raster surface needed for the hydroflattening portion of the tutorial can be created on Windows using the <span class="co">[</span><span class="ot">QGIS point cloud tools</span><span class="co">](https://docs.qgis.org/3.40/en/docs/user_manual/processing_algs/qgis/pointclouddatamanagement.html#build-virtual-point-cloud-vpc)</span>.</span>
+<span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a>Create a virtual point cloud and then <span class="co">[</span><span class="ot">export it to raster</span><span class="co">](https://docs.qgis.org/3.40/en/docs/user_manual/processing_algs/qgis/pointcloudconversion.html#export-to-raster)</span></span>
+<span id="cb20-62"><a href="#cb20-62" aria-hidden="true" tabindex="-1"></a>(selecting classes 2,10,13 and setting the output resolution to 3.2808 ft).</span>
+<span id="cb20-63"><a href="#cb20-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-64"><a href="#cb20-64" aria-hidden="true" tabindex="-1"></a><span class="fu">### Download data</span></span>
+<span id="cb20-65"><a href="#cb20-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-66"><a href="#cb20-66" aria-hidden="true" tabindex="-1"></a>We will download lidar dataset from <span class="co">[</span><span class="ot">USGS website</span><span class="co">](https://apps.nationalmap.gov/downloader/)</span>.</span>
+<span id="cb20-67"><a href="#cb20-67" aria-hidden="true" tabindex="-1"></a>Search for *Lake Logan, North Carolina* or use this bounding box:</span>
+<span id="cb20-68"><a href="#cb20-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-69"><a href="#cb20-69" aria-hidden="true" tabindex="-1"></a>-82.933790°, 35.423316°  </span>
+<span id="cb20-70"><a href="#cb20-70" aria-hidden="true" tabindex="-1"></a>-82.922031°, 35.407718°</span>
+<span id="cb20-71"><a href="#cb20-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-72"><a href="#cb20-72" aria-hidden="true" tabindex="-1"></a>Look for 2018 project lidar and download 6 lidar tiles as LAZ files.</span>
+<span id="cb20-73"><a href="#cb20-73" aria-hidden="true" tabindex="-1"></a>The coordinate reference system of the data is NAD83(2011) / North Carolina (ftUS) (<span class="co">[</span><span class="ot">EPSG:6543</span><span class="co">](https://spatialreference.org/ref/epsg/6543/)</span>).</span>
+<span id="cb20-74"><a href="#cb20-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-75"><a href="#cb20-75" aria-hidden="true" tabindex="-1"></a>Now create a text file (laslist.txt) with a list of the 6 downloaded file and include the full path,</span>
+<span id="cb20-76"><a href="#cb20-76" aria-hidden="true" tabindex="-1"></a>for example:</span>
+<span id="cb20-77"><a href="#cb20-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-78"><a href="#cb20-78" aria-hidden="true" tabindex="-1"></a><span class="in">```text</span></span>
+<span id="cb20-79"><a href="#cb20-79" aria-hidden="true" tabindex="-1"></a><span class="in">/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00862212_.laz</span></span>
+<span id="cb20-80"><a href="#cb20-80" aria-hidden="true" tabindex="-1"></a><span class="in">/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00862320_.laz</span></span>
+<span id="cb20-81"><a href="#cb20-81" aria-hidden="true" tabindex="-1"></a><span class="in">/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00863205_.laz</span></span>
+<span id="cb20-82"><a href="#cb20-82" aria-hidden="true" tabindex="-1"></a><span class="in">/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00863209_.laz</span></span>
+<span id="cb20-83"><a href="#cb20-83" aria-hidden="true" tabindex="-1"></a><span class="in">/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00863317_.laz</span></span>
+<span id="cb20-84"><a href="#cb20-84" aria-hidden="true" tabindex="-1"></a><span class="in">/path/to/lidar/USGS_LPC_NC_Phase5_2018_A18_LA_37_00862208_.laz</span></span>
+<span id="cb20-85"><a href="#cb20-85" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-86"><a href="#cb20-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-87"><a href="#cb20-87" aria-hidden="true" tabindex="-1"></a>We will use this file later on.</span>
+<span id="cb20-88"><a href="#cb20-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-89"><a href="#cb20-89" aria-hidden="true" tabindex="-1"></a><span class="fu">### Start GRASS and create a new project</span></span>
+<span id="cb20-90"><a href="#cb20-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-91"><a href="#cb20-91" aria-hidden="true" tabindex="-1"></a>::::::::: {.panel-tabset group="language"}</span>
+<span id="cb20-92"><a href="#cb20-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-93"><a href="#cb20-93" aria-hidden="true" tabindex="-1"></a><span class="fu">#### GUI</span></span>
+<span id="cb20-94"><a href="#cb20-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-95"><a href="#cb20-95" aria-hidden="true" tabindex="-1"></a>If this is the first time you have opened GRASS you will see the default startup</span>
+<span id="cb20-96"><a href="#cb20-96" aria-hidden="true" tabindex="-1"></a>screen with a WGS84 world project. Click on the Create new project button on the left</span>
+<span id="cb20-97"><a href="#cb20-97" aria-hidden="true" tabindex="-1"></a>or look for <span class="al">![Add project icon](../get_started/images/project-add.png)</span></span>
+<span id="cb20-98"><a href="#cb20-98" aria-hidden="true" tabindex="-1"></a>on the upper left.</span>
+<span id="cb20-99"><a href="#cb20-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-100"><a href="#cb20-100" aria-hidden="true" tabindex="-1"></a><span class="al">![Creating a new project in GUI](new_firstscreen.webp)</span></span>
+<span id="cb20-101"><a href="#cb20-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-102"><a href="#cb20-102" aria-hidden="true" tabindex="-1"></a>This will open a wizard where you:</span>
+<span id="cb20-103"><a href="#cb20-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-104"><a href="#cb20-104" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>provide a name for the new project (e.g., _nc6543_), click _Next_</span>
+<span id="cb20-105"><a href="#cb20-105" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>specify _Select CRS from a list by EPSG or description_, click _Next_</span>
+<span id="cb20-106"><a href="#cb20-106" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>find EPSG 6543 and select it from the list, click _Next_</span>
+<span id="cb20-107"><a href="#cb20-107" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>select default datum transformation, click _Next_</span>
+<span id="cb20-108"><a href="#cb20-108" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>see summary and click _Finish_</span>
+<span id="cb20-109"><a href="#cb20-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-110"><a href="#cb20-110" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Command line</span></span>
+<span id="cb20-111"><a href="#cb20-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-114"><a href="#cb20-114" aria-hidden="true" tabindex="-1"></a><span class="in">```{bash}</span></span>
+<span id="cb20-115"><a href="#cb20-115" aria-hidden="true" tabindex="-1"></a><span class="ex">grass</span> <span class="at">-c</span> EPSG:6543 /path/to/nc6543</span>
+<span id="cb20-116"><a href="#cb20-116" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-117"><a href="#cb20-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-118"><a href="#cb20-118" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Python</span></span>
+<span id="cb20-119"><a href="#cb20-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-122"><a href="#cb20-122" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb20-123"><a href="#cb20-123" aria-hidden="true" tabindex="-1"></a>gs.create_project(<span class="st">"/path/to/nc6543"</span>, epsg<span class="op">=</span><span class="st">"6543"</span>)</span>
+<span id="cb20-124"><a href="#cb20-124" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-125"><a href="#cb20-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-126"><a href="#cb20-126" aria-hidden="true" tabindex="-1"></a>:::::::::</span>
+<span id="cb20-127"><a href="#cb20-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-128"><a href="#cb20-128" aria-hidden="true" tabindex="-1"></a><span class="fu">### Import data</span></span>
+<span id="cb20-129"><a href="#cb20-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-130"><a href="#cb20-130" aria-hidden="true" tabindex="-1"></a>The next step is to import the ground point data from the 6 lidar</span>
+<span id="cb20-131"><a href="#cb20-131" aria-hidden="true" tabindex="-1"></a>tiles to create a seamless mean ground elevation layer at 1m resolution.</span>
+<span id="cb20-132"><a href="#cb20-132" aria-hidden="true" tabindex="-1"></a>The data is in NC State Plane Feet, so we will be using a conversion factor of 3.28084 to convert the feet to meters for the resolution.</span>
+<span id="cb20-133"><a href="#cb20-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-134"><a href="#cb20-134" aria-hidden="true" tabindex="-1"></a>Fortunately, the GRASS tool <span class="co">[</span><span class="ot">r.in.pdal</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.in.pdal.html)</span></span>
+<span id="cb20-135"><a href="#cb20-135" aria-hidden="true" tabindex="-1"></a>automates several aspects of this process.</span>
+<span id="cb20-136"><a href="#cb20-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-137"><a href="#cb20-137" aria-hidden="true" tabindex="-1"></a>::::::::: {.panel-tabset group="language"}</span>
+<span id="cb20-138"><a href="#cb20-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-139"><a href="#cb20-139" aria-hidden="true" tabindex="-1"></a><span class="fu">#### GUI</span></span>
+<span id="cb20-140"><a href="#cb20-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-141"><a href="#cb20-141" aria-hidden="true" tabindex="-1"></a>Click on _File → Import Raster Data → Point cloud (LAS LiDAR) import_.</span>
+<span id="cb20-142"><a href="#cb20-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-143"><a href="#cb20-143" aria-hidden="true" tabindex="-1"></a>This will bring up the r.in.pdal dialog, that has multiple tabs that allow for several parameters for processing the point cloud</span>
+<span id="cb20-144"><a href="#cb20-144" aria-hidden="true" tabindex="-1"></a>data into a 2D raster.</span>
+<span id="cb20-145"><a href="#cb20-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-146"><a href="#cb20-146" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Input: for the _file_ option browse to the _laslist.txt_.</span>
+<span id="cb20-147"><a href="#cb20-147" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Output: check the boxes for _Use the extent of the input for the raster extent_, and</span>
+<span id="cb20-148"><a href="#cb20-148" aria-hidden="true" tabindex="-1"></a>_Set computation region to match the new raster map_. Type in `lake_logan_1m` for the _Name for the output raster map_.</span>
+<span id="cb20-149"><a href="#cb20-149" aria-hidden="true" tabindex="-1"></a>Type in 3.28084 for the _Output raster resolution_ (the desired cell size is 1 meter).</span>
+<span id="cb20-150"><a href="#cb20-150" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Statistic: keep _mean_, this means that for the points that</span>
+<span id="cb20-151"><a href="#cb20-151" aria-hidden="true" tabindex="-1"></a>fall in each cell, the mean Z value will be calculated and set as the cell value.</span>
+<span id="cb20-152"><a href="#cb20-152" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Selection: input _2,10,13_ in the _Only import points of selected classes_ field.</span>
+<span id="cb20-153"><a href="#cb20-153" aria-hidden="true" tabindex="-1"></a>Class 2 is ground, class 13 are roads and class 10 was used to designate ground points that were</span>
+<span id="cb20-154"><a href="#cb20-154" aria-hidden="true" tabindex="-1"></a>within 1 meter of 3D break lines for water bodies. These classes will get us the complete ground point dataset.</span>
+<span id="cb20-155"><a href="#cb20-155" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Projection: check _Reproject to project’s coordinate system if needed_.</span>
+<span id="cb20-156"><a href="#cb20-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-157"><a href="#cb20-157" aria-hidden="true" tabindex="-1"></a><span class="al">![r.in.pdal Input tab](new_rinpdalinput.webp)</span></span>
+<span id="cb20-158"><a href="#cb20-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-159"><a href="#cb20-159" aria-hidden="true" tabindex="-1"></a>Now press run and wait. You should see the layer added to the map, if you don't see it,</span>
+<span id="cb20-160"><a href="#cb20-160" aria-hidden="true" tabindex="-1"></a>right click on the layer and select _Zoom to selected map(s)_.</span>
+<span id="cb20-161"><a href="#cb20-161" aria-hidden="true" tabindex="-1"></a>From the same context menu you can select _Metadata_ to see</span>
+<span id="cb20-162"><a href="#cb20-162" aria-hidden="true" tabindex="-1"></a>number of cells, CRS information, extent, range of values and other info.</span>
+<span id="cb20-163"><a href="#cb20-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-164"><a href="#cb20-164" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Command line</span></span>
+<span id="cb20-165"><a href="#cb20-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-168"><a href="#cb20-168" aria-hidden="true" tabindex="-1"></a><span class="in">```{bash}</span></span>
+<span id="cb20-169"><a href="#cb20-169" aria-hidden="true" tabindex="-1"></a><span class="ex">r.in.pdal</span> <span class="at">-e</span> <span class="at">-n</span> <span class="at">-w</span> file=/path/to/lidar/laslist.txt output=lake_logan_1m resolution=3.28084 class_filter=2,10,13</span>
+<span id="cb20-170"><a href="#cb20-170" aria-hidden="true" tabindex="-1"></a><span class="ex">r.info</span> map=lake_logan_1m</span>
+<span id="cb20-171"><a href="#cb20-171" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-172"><a href="#cb20-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-173"><a href="#cb20-173" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Python</span></span>
+<span id="cb20-174"><a href="#cb20-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-177"><a href="#cb20-177" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb20-178"><a href="#cb20-178" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb20-179"><a href="#cb20-179" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.in.pdal"</span>,</span>
+<span id="cb20-180"><a href="#cb20-180" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="st">"enw"</span>,</span>
+<span id="cb20-181"><a href="#cb20-181" aria-hidden="true" tabindex="-1"></a>    <span class="bu">file</span><span class="op">=</span><span class="st">"/path/to/lidar/laslist.txt"</span>,</span>
+<span id="cb20-182"><a href="#cb20-182" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"lake_logan_1m"</span>,</span>
+<span id="cb20-183"><a href="#cb20-183" aria-hidden="true" tabindex="-1"></a>    resolution<span class="op">=</span><span class="fl">3.28084</span>,</span>
+<span id="cb20-184"><a href="#cb20-184" aria-hidden="true" tabindex="-1"></a>    class_filter<span class="op">=</span>[<span class="dv">2</span>, <span class="dv">10</span>, <span class="dv">13</span>],</span>
+<span id="cb20-185"><a href="#cb20-185" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-186"><a href="#cb20-186" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(gs.read_command(<span class="st">"r.info"</span>, <span class="bu">map</span><span class="op">=</span><span class="st">"lake_logan_1m"</span>))</span>
+<span id="cb20-187"><a href="#cb20-187" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-188"><a href="#cb20-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-189"><a href="#cb20-189" aria-hidden="true" tabindex="-1"></a>:::::::::</span>
+<span id="cb20-190"><a href="#cb20-190" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-191"><a href="#cb20-191" aria-hidden="true" tabindex="-1"></a><span class="al">![Ground points processed into a raster, elevation is in feet](newmeangroundlegend_anna.webp)</span></span>
+<span id="cb20-192"><a href="#cb20-192" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-193"><a href="#cb20-193" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title="Overwriting data"}</span>
+<span id="cb20-194"><a href="#cb20-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-195"><a href="#cb20-195" aria-hidden="true" tabindex="-1"></a>By default, GRASS prevents overwriting existing maps to protect your data, so you need to explicitly allow overwriting when re-running analyses or generating outputs with the same name.</span>
+<span id="cb20-196"><a href="#cb20-196" aria-hidden="true" tabindex="-1"></a>In a tool dialog, check _Allow output files to overwrite existing files_. In command line, use <span class="in">`--o`</span>, and in Python, use <span class="in">`overwrite=True`</span>.</span>
+<span id="cb20-197"><a href="#cb20-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-198"><a href="#cb20-198" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-199"><a href="#cb20-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-200"><a href="#cb20-200" aria-hidden="true" tabindex="-1"></a><span class="fu">### Download orthoimagery</span></span>
+<span id="cb20-201"><a href="#cb20-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-202"><a href="#cb20-202" aria-hidden="true" tabindex="-1"></a>The State of North Carolina has a program to collect aerial imagery on a 4 year cycle.</span>
+<span id="cb20-203"><a href="#cb20-203" aria-hidden="true" tabindex="-1"></a>The most current data set for this location is from 2023.</span>
+<span id="cb20-204"><a href="#cb20-204" aria-hidden="true" tabindex="-1"></a>The URL to access the WMS data set is</span>
+<span id="cb20-205"><a href="#cb20-205" aria-hidden="true" tabindex="-1"></a><span class="in">`https://services.gis.nc.gov/secure/services/Imagery/Orthoimagery_2023/ImageServer/WMSServer`</span>.</span>
+<span id="cb20-206"><a href="#cb20-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-207"><a href="#cb20-207" aria-hidden="true" tabindex="-1"></a>Data is also available for 2019, 2015, and 2010, just substitute those years for 2023 in the URL above if you wish to review those years.</span>
+<span id="cb20-208"><a href="#cb20-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-209"><a href="#cb20-209" aria-hidden="true" tabindex="-1"></a>::::::::: {.panel-tabset group="language"}</span>
+<span id="cb20-210"><a href="#cb20-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-211"><a href="#cb20-211" aria-hidden="true" tabindex="-1"></a><span class="fu">#### GUI</span></span>
+<span id="cb20-212"><a href="#cb20-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-213"><a href="#cb20-213" aria-hidden="true" tabindex="-1"></a>To display it, add web service layer:</span>
+<span id="cb20-214"><a href="#cb20-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-215"><a href="#cb20-215" aria-hidden="true" tabindex="-1"></a><span class="al">![Add WMS layer in GUI](addwms.webp)</span>  </span>
+<span id="cb20-216"><a href="#cb20-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-217"><a href="#cb20-217" aria-hidden="true" tabindex="-1"></a>and paste the URL into the _Server settings_ text box and press _Connect_.</span>
+<span id="cb20-218"><a href="#cb20-218" aria-hidden="true" tabindex="-1"></a>Select the newly populated layer _Orthoimagery (2023)_.</span>
+<span id="cb20-219"><a href="#cb20-219" aria-hidden="true" tabindex="-1"></a>Select _Source projection_ EPSG:6543 to match your project's CRS for faster response.</span>
+<span id="cb20-220"><a href="#cb20-220" aria-hidden="true" tabindex="-1"></a>Also select the jpeg radio button in the _Source image format_.</span>
+<span id="cb20-221"><a href="#cb20-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-222"><a href="#cb20-222" aria-hidden="true" tabindex="-1"></a>To remember the URL, click on the _Save_ button on the top of the dialog and enter</span>
+<span id="cb20-223"><a href="#cb20-223" aria-hidden="true" tabindex="-1"></a>a descriptive name to quickly recall the image service between sessions.</span>
+<span id="cb20-224"><a href="#cb20-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-225"><a href="#cb20-225" aria-hidden="true" tabindex="-1"></a><span class="al">![WMS dialog](wmsdialog.webp)</span></span>
+<span id="cb20-226"><a href="#cb20-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-227"><a href="#cb20-227" aria-hidden="true" tabindex="-1"></a>Click *Add layer*.</span>
+<span id="cb20-228"><a href="#cb20-228" aria-hidden="true" tabindex="-1"></a>Your GUI should now have _Orthoimagery (2023)_ listed as one of the layers.</span>
+<span id="cb20-229"><a href="#cb20-229" aria-hidden="true" tabindex="-1"></a>Uncheck the orthoimagery layer and zoom into one of the void areas to the left of the lake. Once</span>
+<span id="cb20-230"><a href="#cb20-230" aria-hidden="true" tabindex="-1"></a>you have zoomed in, check the orthoimagery layer and see what the void represents.</span>
+<span id="cb20-231"><a href="#cb20-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-232"><a href="#cb20-232" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Command line</span></span>
+<span id="cb20-233"><a href="#cb20-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-236"><a href="#cb20-236" aria-hidden="true" tabindex="-1"></a><span class="in">```{bash}</span></span>
+<span id="cb20-237"><a href="#cb20-237" aria-hidden="true" tabindex="-1"></a><span class="ex">r.in.wms</span> layers=0 output=ortho srs=6543 url=https://services.gis.nc.gov/secure/services/Imagery/Orthoimagery_2023/ImageServer/WMSServer</span>
+<span id="cb20-238"><a href="#cb20-238" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-239"><a href="#cb20-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-240"><a href="#cb20-240" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Python</span></span>
+<span id="cb20-241"><a href="#cb20-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-244"><a href="#cb20-244" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb20-245"><a href="#cb20-245" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb20-246"><a href="#cb20-246" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.in.wms"</span>,</span>
+<span id="cb20-247"><a href="#cb20-247" aria-hidden="true" tabindex="-1"></a>    layers<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb20-248"><a href="#cb20-248" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"ortho"</span>,</span>
+<span id="cb20-249"><a href="#cb20-249" aria-hidden="true" tabindex="-1"></a>    srs<span class="op">=</span><span class="st">"6543"</span>,</span>
+<span id="cb20-250"><a href="#cb20-250" aria-hidden="true" tabindex="-1"></a>    url<span class="op">=</span><span class="st">"https://services.gis.nc.gov/secure/services/Imagery/Orthoimagery_2023/ImageServer/WMSServer"</span>,</span>
+<span id="cb20-251"><a href="#cb20-251" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-252"><a href="#cb20-252" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-253"><a href="#cb20-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-254"><a href="#cb20-254" aria-hidden="true" tabindex="-1"></a>:::::::::</span>
+<span id="cb20-255"><a href="#cb20-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-256"><a href="#cb20-256" aria-hidden="true" tabindex="-1"></a><span class="al">![Orthoimagery 2023](imagery.webp)</span></span>
+<span id="cb20-257"><a href="#cb20-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-258"><a href="#cb20-258" aria-hidden="true" tabindex="-1"></a><span class="fu">### Installing r.hydro.flatten addon</span></span>
+<span id="cb20-259"><a href="#cb20-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-260"><a href="#cb20-260" aria-hidden="true" tabindex="-1"></a>::::::::: {.panel-tabset group="language"}</span>
+<span id="cb20-261"><a href="#cb20-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-262"><a href="#cb20-262" aria-hidden="true" tabindex="-1"></a><span class="fu">#### GUI</span></span>
+<span id="cb20-263"><a href="#cb20-263" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-264"><a href="#cb20-264" aria-hidden="true" tabindex="-1"></a>::::: grid</span>
+<span id="cb20-265"><a href="#cb20-265" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-266"><a href="#cb20-266" aria-hidden="true" tabindex="-1"></a>GRASS Addons are installed in the GUI with</span>
+<span id="cb20-267"><a href="#cb20-267" aria-hidden="true" tabindex="-1"></a>_Addons extensions→ Install extensions from addons_.</span>
+<span id="cb20-268"><a href="#cb20-268" aria-hidden="true" tabindex="-1"></a>In the dialog, search for the addon and _Install_.</span>
+<span id="cb20-269"><a href="#cb20-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-270"><a href="#cb20-270" aria-hidden="true" tabindex="-1"></a>At this point, you could run r.hydro.flatten from the command line,</span>
+<span id="cb20-271"><a href="#cb20-271" aria-hidden="true" tabindex="-1"></a>but it would be easier going forward if the command was integrated into the Tools tab. Restarting</span>
+<span id="cb20-272"><a href="#cb20-272" aria-hidden="true" tabindex="-1"></a>GRASS will automatically load the r.hydro.flatten tool in the Addons portion of the Tools tab.</span>
+<span id="cb20-273"><a href="#cb20-273" aria-hidden="true" tabindex="-1"></a>In the quit confirmation dialog</span>
+<span id="cb20-274"><a href="#cb20-274" aria-hidden="true" tabindex="-1"></a>click on _Quit GRASS_. The store curent settings dialog will then pop up, select _No_.</span>
+<span id="cb20-275"><a href="#cb20-275" aria-hidden="true" tabindex="-1"></a>Start GRASS again. You should now see an Addons option in the Tools tab with r.hydro.flatten listed there.</span>
+<span id="cb20-276"><a href="#cb20-276" aria-hidden="true" tabindex="-1"></a>Double click on r.hydro.flatten tool to open a dialog.</span>
+<span id="cb20-277"><a href="#cb20-277" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-278"><a href="#cb20-278" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-279"><a href="#cb20-279" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-280"><a href="#cb20-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-281"><a href="#cb20-281" aria-hidden="true" tabindex="-1"></a><span class="al">![](new_install_hydroflatten.webp)</span></span>
+<span id="cb20-282"><a href="#cb20-282" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-283"><a href="#cb20-283" aria-hidden="true" tabindex="-1"></a>::::::</span>
+<span id="cb20-284"><a href="#cb20-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-285"><a href="#cb20-285" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Command line</span></span>
+<span id="cb20-286"><a href="#cb20-286" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-289"><a href="#cb20-289" aria-hidden="true" tabindex="-1"></a><span class="in">```{bash}</span></span>
+<span id="cb20-290"><a href="#cb20-290" aria-hidden="true" tabindex="-1"></a><span class="ex">g.extension</span> extension=r.hydro.flatten</span>
+<span id="cb20-291"><a href="#cb20-291" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-292"><a href="#cb20-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-293"><a href="#cb20-293" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Python</span></span>
+<span id="cb20-294"><a href="#cb20-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-297"><a href="#cb20-297" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb20-298"><a href="#cb20-298" aria-hidden="true" tabindex="-1"></a>gs.run_command(<span class="st">"g.extension"</span>, extension<span class="op">=</span><span class="st">"r.hydro.flatten"</span>)</span>
+<span id="cb20-299"><a href="#cb20-299" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-300"><a href="#cb20-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-301"><a href="#cb20-301" aria-hidden="true" tabindex="-1"></a>:::::::::</span>
+<span id="cb20-302"><a href="#cb20-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-303"><a href="#cb20-303" aria-hidden="true" tabindex="-1"></a><span class="fu">## Hydro-flattening Lake Logan</span></span>
+<span id="cb20-304"><a href="#cb20-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-305"><a href="#cb20-305" aria-hidden="true" tabindex="-1"></a>Now we are ready to compute the hydro-flattened DEM.</span>
+<span id="cb20-306"><a href="#cb20-306" aria-hidden="true" tabindex="-1"></a>The r.hydro.flatten addon will calculate the estimated elevations of the voids from the 14th</span>
+<span id="cb20-307"><a href="#cb20-307" aria-hidden="true" tabindex="-1"></a>percentile of the edge values of each void in the ground point data and the standard deviation of the</span>
+<span id="cb20-308"><a href="#cb20-308" aria-hidden="true" tabindex="-1"></a>edge values around each void.</span>
+<span id="cb20-309"><a href="#cb20-309" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-310"><a href="#cb20-310" aria-hidden="true" tabindex="-1"></a>::::::::: {.panel-tabset group="language"}</span>
+<span id="cb20-311"><a href="#cb20-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-312"><a href="#cb20-312" aria-hidden="true" tabindex="-1"></a><span class="fu">### GUI</span></span>
+<span id="cb20-313"><a href="#cb20-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-314"><a href="#cb20-314" aria-hidden="true" tabindex="-1"></a>In the r.hydro.flatten dialog, set the following input and output values:</span>
+<span id="cb20-315"><a href="#cb20-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-316"><a href="#cb20-316" aria-hidden="true" tabindex="-1"></a><span class="al">![Required tab of r.hydro.flatten dialog](new_rihydroflatten1.webp)</span></span>
+<span id="cb20-317"><a href="#cb20-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-318"><a href="#cb20-318" aria-hidden="true" tabindex="-1"></a><span class="fu">### Command line</span></span>
+<span id="cb20-319"><a href="#cb20-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-322"><a href="#cb20-322" aria-hidden="true" tabindex="-1"></a><span class="in">```{bash}</span></span>
+<span id="cb20-323"><a href="#cb20-323" aria-hidden="true" tabindex="-1"></a><span class="ex">r.hydro.flatten</span> input=lake_logan_1m water_elevation=lake_logan_1m_wat_elev water_elevation_stddev=lake_logan_1m_wat_stddev percentile=14</span>
+<span id="cb20-324"><a href="#cb20-324" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-325"><a href="#cb20-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-326"><a href="#cb20-326" aria-hidden="true" tabindex="-1"></a><span class="fu">### Python</span></span>
+<span id="cb20-327"><a href="#cb20-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-330"><a href="#cb20-330" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb20-331"><a href="#cb20-331" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb20-332"><a href="#cb20-332" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.hydro.flatten"</span>,</span>
+<span id="cb20-333"><a href="#cb20-333" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m"</span>,</span>
+<span id="cb20-334"><a href="#cb20-334" aria-hidden="true" tabindex="-1"></a>    water_elevation<span class="op">=</span><span class="st">"lake_logan_1m_wat_elev"</span>,</span>
+<span id="cb20-335"><a href="#cb20-335" aria-hidden="true" tabindex="-1"></a>    water_elevation_stddev<span class="op">=</span><span class="st">"lake_logan_1m_wat_stddev"</span>,</span>
+<span id="cb20-336"><a href="#cb20-336" aria-hidden="true" tabindex="-1"></a>    percentile<span class="op">=</span><span class="dv">14</span>,</span>
+<span id="cb20-337"><a href="#cb20-337" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-338"><a href="#cb20-338" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-339"><a href="#cb20-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-340"><a href="#cb20-340" aria-hidden="true" tabindex="-1"></a>:::::::::</span>
+<span id="cb20-341"><a href="#cb20-341" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-342"><a href="#cb20-342" aria-hidden="true" tabindex="-1"></a>::::: grid</span>
+<span id="cb20-343"><a href="#cb20-343" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-344"><a href="#cb20-344" aria-hidden="true" tabindex="-1"></a>Let's inspect the newly created *lake_logan_1m_wat_stddev* raster</span>
+<span id="cb20-345"><a href="#cb20-345" aria-hidden="true" tabindex="-1"></a>that represents the standard deviation of elevation values along the edge of the water bodies.</span>
+<span id="cb20-346"><a href="#cb20-346" aria-hidden="true" tabindex="-1"></a>As you can see, the pond below the dam has such a low value that it is almost white.</span>
+<span id="cb20-347"><a href="#cb20-347" aria-hidden="true" tabindex="-1"></a>This means the hydro-flattening tool successfully flattened the pond surface.</span>
+<span id="cb20-348"><a href="#cb20-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-349"><a href="#cb20-349" aria-hidden="true" tabindex="-1"></a>However, the river upstream of the main lake (southwest), the lake, and the river downstream of the lake (northeast)</span>
+<span id="cb20-350"><a href="#cb20-350" aria-hidden="true" tabindex="-1"></a>all seem to have the same color.</span>
+<span id="cb20-351"><a href="#cb20-351" aria-hidden="true" tabindex="-1"></a>This happens because the elevation is calculated based on edge values,</span>
+<span id="cb20-352"><a href="#cb20-352" aria-hidden="true" tabindex="-1"></a>and the edges of the river and lake are treated as one continuous surface.</span>
+<span id="cb20-353"><a href="#cb20-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-354"><a href="#cb20-354" aria-hidden="true" tabindex="-1"></a>To improve accuracy, we need to interrupt that continuity by drawing 2D break lines</span>
+<span id="cb20-355"><a href="#cb20-355" aria-hidden="true" tabindex="-1"></a>in a vector layer—one where the river flows into the lake and another at the dam.</span>
+<span id="cb20-356"><a href="#cb20-356" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-357"><a href="#cb20-357" aria-hidden="true" tabindex="-1"></a>Since rivers are not perfectly level like lakes or ponds, we also need to add transects—short cross-sections—along the river.</span>
+<span id="cb20-358"><a href="#cb20-358" aria-hidden="true" tabindex="-1"></a>These help capture gradual changes in elevation along the flow direction and ensure a more realistic representation of the river surface.</span>
+<span id="cb20-359"><a href="#cb20-359" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-360"><a href="#cb20-360" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-361"><a href="#cb20-361" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-362"><a href="#cb20-362" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-363"><a href="#cb20-363" aria-hidden="true" tabindex="-1"></a><span class="al">![Standard deviation of elevation along water bodies](stddev_nobreaklines.webp)</span></span>
+<span id="cb20-364"><a href="#cb20-364" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-365"><a href="#cb20-365" aria-hidden="true" tabindex="-1"></a>::::::</span>
+<span id="cb20-366"><a href="#cb20-366" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-367"><a href="#cb20-367" aria-hidden="true" tabindex="-1"></a><span class="fu">## Adding break lines</span></span>
+<span id="cb20-368"><a href="#cb20-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-369"><a href="#cb20-369" aria-hidden="true" tabindex="-1"></a>We will manually add a break line to separate the lake from the river on both sides.</span>
+<span id="cb20-370"><a href="#cb20-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-371"><a href="#cb20-371" aria-hidden="true" tabindex="-1"></a>Additionally, we will digitize a centerline representing the river and create transects in an automated way</span>
+<span id="cb20-372"><a href="#cb20-372" aria-hidden="true" tabindex="-1"></a>by using <span class="co">[</span><span class="ot">v.transects</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/addons/v.transects.html)</span> tool.</span>
+<span id="cb20-373"><a href="#cb20-373" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-374"><a href="#cb20-374" aria-hidden="true" tabindex="-1"></a><span class="fu">### Creating centerlines</span></span>
+<span id="cb20-375"><a href="#cb20-375" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-376"><a href="#cb20-376" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>We will start a <span class="co">[</span><span class="ot">vector digitizer</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/wxGUI.vdigit.html)</span></span>
+<span id="cb20-377"><a href="#cb20-377" aria-hidden="true" tabindex="-1"></a>from the <span class="co">[</span><span class="ot">Map Display toolbar</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/wxGUI.html#map-display-toolbar)</span></span>
+<span id="cb20-378"><a href="#cb20-378" aria-hidden="true" tabindex="-1"></a>(combo box at the end of the toolbar).</span>
+<span id="cb20-379"><a href="#cb20-379" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-380"><a href="#cb20-380" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>When the digitizer toolbar appears, <span class="co">[</span><span class="ot">select</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/wxGUI.vdigit.html#creating-a-new-vector-map)</span></span>
+<span id="cb20-381"><a href="#cb20-381" aria-hidden="true" tabindex="-1"></a> _New vector map_ and type a name for it, such as _centerlines_.</span>
+<span id="cb20-382"><a href="#cb20-382" aria-hidden="true" tabindex="-1"></a>Create it and then you can close the newly opened attribute manager dialog, we won't need it.</span>
+<span id="cb20-383"><a href="#cb20-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-384"><a href="#cb20-384" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Now start digitizing a centerline, it doesn't have to be perfect. Select _Digitize new line_ tool</span>
+<span id="cb20-385"><a href="#cb20-385" aria-hidden="true" tabindex="-1"></a>from the <span class="co">[</span><span class="ot">toolbar</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/wxGUI.vdigit.html#digitizer-toolbar)</span></span>
+<span id="cb20-386"><a href="#cb20-386" aria-hidden="true" tabindex="-1"></a>and start digitizing from the edge with right click. To end line, use left click. Do it for both segments of the river.</span>
+<span id="cb20-387"><a href="#cb20-387" aria-hidden="true" tabindex="-1"></a>Quit digitizer.</span>
+<span id="cb20-388"><a href="#cb20-388" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-389"><a href="#cb20-389" aria-hidden="true" tabindex="-1"></a><span class="al">![Digitized centerline](new_centerline_digitized.webp)</span></span>
+<span id="cb20-390"><a href="#cb20-390" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-391"><a href="#cb20-391" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title="Automated centerlines"}</span>
+<span id="cb20-392"><a href="#cb20-392" aria-hidden="true" tabindex="-1"></a>For longer river segments you can use <span class="co">[</span><span class="ot">v.centerline</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/addons/v.centerline.html)</span></span>
+<span id="cb20-393"><a href="#cb20-393" aria-hidden="true" tabindex="-1"></a>for automated centerline generation.</span>
+<span id="cb20-394"><a href="#cb20-394" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-395"><a href="#cb20-395" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-396"><a href="#cb20-396" aria-hidden="true" tabindex="-1"></a><span class="fu">### Creating river transects</span></span>
+<span id="cb20-397"><a href="#cb20-397" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-398"><a href="#cb20-398" aria-hidden="true" tabindex="-1"></a>Install <span class="co">[</span><span class="ot">v.transects</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/addons/v.transects.html)</span> addon</span>
+<span id="cb20-399"><a href="#cb20-399" aria-hidden="true" tabindex="-1"></a>in the same way as we installed the r.hydro.flatten one.</span>
+<span id="cb20-400"><a href="#cb20-400" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-401"><a href="#cb20-401" aria-hidden="true" tabindex="-1"></a>::::::::: {.panel-tabset group="language"}</span>
+<span id="cb20-402"><a href="#cb20-402" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-403"><a href="#cb20-403" aria-hidden="true" tabindex="-1"></a><span class="fu">#### GUI</span></span>
+<span id="cb20-404"><a href="#cb20-404" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-405"><a href="#cb20-405" aria-hidden="true" tabindex="-1"></a>In the GUI dialog set the following values:</span>
+<span id="cb20-406"><a href="#cb20-406" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-407"><a href="#cb20-407" aria-hidden="true" tabindex="-1"></a><span class="al">![Required tab](new_vtransect_1.webp)</span></span>
+<span id="cb20-408"><a href="#cb20-408" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-409"><a href="#cb20-409" aria-hidden="true" tabindex="-1"></a><span class="al">![Optional tab](new_vtransect_options.webp)</span></span>
+<span id="cb20-410"><a href="#cb20-410" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-411"><a href="#cb20-411" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Command line</span></span>
+<span id="cb20-412"><a href="#cb20-412" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-415"><a href="#cb20-415" aria-hidden="true" tabindex="-1"></a><span class="in">```{bash}</span></span>
+<span id="cb20-416"><a href="#cb20-416" aria-hidden="true" tabindex="-1"></a><span class="ex">v.transects</span> input=centerlines output=centerlines_120_trans transect_spacing=120 dleft=60 dright=60 metric=along transect_perpendicular=line <span class="at">-l</span></span>
+<span id="cb20-417"><a href="#cb20-417" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-418"><a href="#cb20-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-419"><a href="#cb20-419" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Python</span></span>
+<span id="cb20-420"><a href="#cb20-420" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-423"><a href="#cb20-423" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb20-424"><a href="#cb20-424" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb20-425"><a href="#cb20-425" aria-hidden="true" tabindex="-1"></a>    <span class="st">"v.transects"</span>,</span>
+<span id="cb20-426"><a href="#cb20-426" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"centerlines"</span>,</span>
+<span id="cb20-427"><a href="#cb20-427" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"centerlines_120_trans"</span>,</span>
+<span id="cb20-428"><a href="#cb20-428" aria-hidden="true" tabindex="-1"></a>    transect_spacing<span class="op">=</span><span class="dv">120</span>,</span>
+<span id="cb20-429"><a href="#cb20-429" aria-hidden="true" tabindex="-1"></a>    dleft<span class="op">=</span><span class="dv">60</span>,</span>
+<span id="cb20-430"><a href="#cb20-430" aria-hidden="true" tabindex="-1"></a>    dright<span class="op">=</span><span class="dv">60</span>,</span>
+<span id="cb20-431"><a href="#cb20-431" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"along"</span>,</span>
+<span id="cb20-432"><a href="#cb20-432" aria-hidden="true" tabindex="-1"></a>    transect_perpendicular<span class="op">=</span><span class="st">"line"</span>,</span>
+<span id="cb20-433"><a href="#cb20-433" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="st">"l"</span>,</span>
+<span id="cb20-434"><a href="#cb20-434" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-435"><a href="#cb20-435" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-436"><a href="#cb20-436" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-437"><a href="#cb20-437" aria-hidden="true" tabindex="-1"></a>:::::::::</span>
+<span id="cb20-438"><a href="#cb20-438" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-439"><a href="#cb20-439" aria-hidden="true" tabindex="-1"></a>::::: grid</span>
+<span id="cb20-440"><a href="#cb20-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-441"><a href="#cb20-441" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-442"><a href="#cb20-442" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-443"><a href="#cb20-443" aria-hidden="true" tabindex="-1"></a>Once the output transect layer is added to the Layers panel you will see the transects generated on the</span>
+<span id="cb20-444"><a href="#cb20-444" aria-hidden="true" tabindex="-1"></a>Map Display. You will note that some of the transect do not exactly line up with the shoreline correctly.</span>
+<span id="cb20-445"><a href="#cb20-445" aria-hidden="true" tabindex="-1"></a>Right click on the transect vector layer and select _Start editing_ to bring up the vector editing toolbar.</span>
+<span id="cb20-446"><a href="#cb20-446" aria-hidden="true" tabindex="-1"></a>Select the _Move selected vertex_ tool and use it to select and move the ends of the line to line up</span>
+<span id="cb20-447"><a href="#cb20-447" aria-hidden="true" tabindex="-1"></a>correctly. (Left click to select, left click to select new location, right click to complete move.)</span>
+<span id="cb20-448"><a href="#cb20-448" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-449"><a href="#cb20-449" aria-hidden="true" tabindex="-1"></a><span class="al">![](new_move_selected_vertex_tool.webp)</span></span>
+<span id="cb20-450"><a href="#cb20-450" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-451"><a href="#cb20-451" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-452"><a href="#cb20-452" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-453"><a href="#cb20-453" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-454"><a href="#cb20-454" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-455"><a href="#cb20-455" aria-hidden="true" tabindex="-1"></a><span class="al">![Layers _centerlines_ and *centerlines_120_trans*](transects.webp)</span></span>
+<span id="cb20-456"><a href="#cb20-456" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-457"><a href="#cb20-457" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-458"><a href="#cb20-458" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-459"><a href="#cb20-459" aria-hidden="true" tabindex="-1"></a>::::::</span>
+<span id="cb20-460"><a href="#cb20-460" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-461"><a href="#cb20-461" aria-hidden="true" tabindex="-1"></a><span class="fu">### Digitizing dam</span></span>
+<span id="cb20-462"><a href="#cb20-462" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-463"><a href="#cb20-463" aria-hidden="true" tabindex="-1"></a>We will continue digitizing the *centerlines_120_trans* layer by adding breaklines on both sides of the dam.</span>
+<span id="cb20-464"><a href="#cb20-464" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-465"><a href="#cb20-465" aria-hidden="true" tabindex="-1"></a>Zoom in to the north side of the lake where you see the semicircle of the dam, and click on the add</span>
+<span id="cb20-466"><a href="#cb20-466" aria-hidden="true" tabindex="-1"></a>line tool in the toolbar.</span>
+<span id="cb20-467"><a href="#cb20-467" aria-hidden="true" tabindex="-1"></a>In the orthophoto, you can see the dam line at the top of the dam. The first transect is placed at</span>
+<span id="cb20-468"><a href="#cb20-468" aria-hidden="true" tabindex="-1"></a>approximately the downstream edge of the plunge pool below the dam. It’s probably a good idea to put</span>
+<span id="cb20-469"><a href="#cb20-469" aria-hidden="true" tabindex="-1"></a>a break line at the base of the dam as well.</span>
+<span id="cb20-470"><a href="#cb20-470" aria-hidden="true" tabindex="-1"></a>Digitize the line along where you see the dam structure meet the water and save it.</span>
+<span id="cb20-471"><a href="#cb20-471" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-472"><a href="#cb20-472" aria-hidden="true" tabindex="-1"></a><span class="al">![Digitizing the dam](new_damwaterline.webp)</span></span>
+<span id="cb20-473"><a href="#cb20-473" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-474"><a href="#cb20-474" aria-hidden="true" tabindex="-1"></a><span class="fu">## Hydro-flattening with break lines</span></span>
+<span id="cb20-475"><a href="#cb20-475" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-476"><a href="#cb20-476" aria-hidden="true" tabindex="-1"></a>Let's re-run r.hydro.flatten with the created break lines.</span>
+<span id="cb20-477"><a href="#cb20-477" aria-hidden="true" tabindex="-1"></a>This time, use *centerlines_120_trans* as your input vector layer</span>
+<span id="cb20-478"><a href="#cb20-478" aria-hidden="true" tabindex="-1"></a>and output resulting raster with filled DEM.</span>
+<span id="cb20-479"><a href="#cb20-479" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-480"><a href="#cb20-480" aria-hidden="true" tabindex="-1"></a>::::::::: {.panel-tabset group="language"}</span>
+<span id="cb20-481"><a href="#cb20-481" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-482"><a href="#cb20-482" aria-hidden="true" tabindex="-1"></a><span class="fu">### GUI</span></span>
+<span id="cb20-483"><a href="#cb20-483" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-484"><a href="#cb20-484" aria-hidden="true" tabindex="-1"></a>In the GUI dialog set the following values in the Optional tab.</span>
+<span id="cb20-485"><a href="#cb20-485" aria-hidden="true" tabindex="-1"></a>In the Required tab, add _\_2dbreak_ to the output names.</span>
+<span id="cb20-486"><a href="#cb20-486" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-487"><a href="#cb20-487" aria-hidden="true" tabindex="-1"></a><span class="al">![Optional tab](new_hydrofaltten_2D_trans.webp)</span></span>
+<span id="cb20-488"><a href="#cb20-488" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-489"><a href="#cb20-489" aria-hidden="true" tabindex="-1"></a><span class="fu">### Command line</span></span>
+<span id="cb20-490"><a href="#cb20-490" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-493"><a href="#cb20-493" aria-hidden="true" tabindex="-1"></a><span class="in">```{bash}</span></span>
+<span id="cb20-494"><a href="#cb20-494" aria-hidden="true" tabindex="-1"></a><span class="ex">r.hydro.flatten</span> input=lake_logan_1m water_elevation=lake_logan_1m_wat_elev_2dbreak water_elevation_stddev=lake_logan_1m_wat_stddev_2dbreak percentile=14 breaklines=centerlines_120_trans filled_elevation=lake_logan_1m_filled_DEM</span>
+<span id="cb20-495"><a href="#cb20-495" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-496"><a href="#cb20-496" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-497"><a href="#cb20-497" aria-hidden="true" tabindex="-1"></a><span class="fu">### Python</span></span>
+<span id="cb20-498"><a href="#cb20-498" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-501"><a href="#cb20-501" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb20-502"><a href="#cb20-502" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb20-503"><a href="#cb20-503" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.hydro.flatten"</span>,</span>
+<span id="cb20-504"><a href="#cb20-504" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m"</span>,</span>
+<span id="cb20-505"><a href="#cb20-505" aria-hidden="true" tabindex="-1"></a>    water_elevation<span class="op">=</span><span class="st">"lake_logan_1m_wat_elev_2dbreak"</span>,</span>
+<span id="cb20-506"><a href="#cb20-506" aria-hidden="true" tabindex="-1"></a>    water_elevation_stddev<span class="op">=</span><span class="st">"lake_logan_1m_wat_stddev_2dbreak"</span>,</span>
+<span id="cb20-507"><a href="#cb20-507" aria-hidden="true" tabindex="-1"></a>    percentile<span class="op">=</span><span class="dv">14</span>,</span>
+<span id="cb20-508"><a href="#cb20-508" aria-hidden="true" tabindex="-1"></a>    breaklines<span class="op">=</span><span class="st">"centerlines_120_trans"</span>,</span>
+<span id="cb20-509"><a href="#cb20-509" aria-hidden="true" tabindex="-1"></a>    filled_elevation<span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM"</span>,</span>
+<span id="cb20-510"><a href="#cb20-510" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-511"><a href="#cb20-511" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-512"><a href="#cb20-512" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-513"><a href="#cb20-513" aria-hidden="true" tabindex="-1"></a>:::::::::</span>
+<span id="cb20-514"><a href="#cb20-514" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-515"><a href="#cb20-515" aria-hidden="true" tabindex="-1"></a>::::: grid</span>
+<span id="cb20-516"><a href="#cb20-516" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-517"><a href="#cb20-517" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-518"><a href="#cb20-518" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-519"><a href="#cb20-519" aria-hidden="true" tabindex="-1"></a>Looking at the new standard deviation layer</span>
+<span id="cb20-520"><a href="#cb20-520" aria-hidden="true" tabindex="-1"></a>you will see that the lake and river are very light, indicating that the edge values for the lake and most</span>
+<span id="cb20-521"><a href="#cb20-521" aria-hidden="true" tabindex="-1"></a>of the river sections have relatively low standard deviation values.</span>
+<span id="cb20-522"><a href="#cb20-522" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-523"><a href="#cb20-523" aria-hidden="true" tabindex="-1"></a>There is a red spot in the top center of the study area.</span>
+<span id="cb20-524"><a href="#cb20-524" aria-hidden="true" tabindex="-1"></a>If you look at the area on the orthoimagery, you see dense evergreen vegetation. This is an area with a</span>
+<span id="cb20-525"><a href="#cb20-525" aria-hidden="true" tabindex="-1"></a>substantial void in the ground points that is not water.</span>
+<span id="cb20-526"><a href="#cb20-526" aria-hidden="true" tabindex="-1"></a>We don't want this area to be flat, rather we will properly interpolate it.</span>
+<span id="cb20-527"><a href="#cb20-527" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-528"><a href="#cb20-528" aria-hidden="true" tabindex="-1"></a>To avoid filling areas with standard deviation higher than a certain value, we will re-run</span>
+<span id="cb20-529"><a href="#cb20-529" aria-hidden="true" tabindex="-1"></a>r.hydro.flatten with parameter **max_stddev** and then fill those values</span>
+<span id="cb20-530"><a href="#cb20-530" aria-hidden="true" tabindex="-1"></a>with <span class="co">[</span><span class="ot">r.fillnulls</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.fillnulls.html)</span>.</span>
+<span id="cb20-531"><a href="#cb20-531" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-532"><a href="#cb20-532" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-533"><a href="#cb20-533" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-534"><a href="#cb20-534" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-535"><a href="#cb20-535" aria-hidden="true" tabindex="-1"></a><span class="al">![](stddev_breaklines.webp)</span></span>
+<span id="cb20-536"><a href="#cb20-536" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-537"><a href="#cb20-537" aria-hidden="true" tabindex="-1"></a>::::::</span>
+<span id="cb20-538"><a href="#cb20-538" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-539"><a href="#cb20-539" aria-hidden="true" tabindex="-1"></a>::::::::: {.panel-tabset group="language"}</span>
+<span id="cb20-540"><a href="#cb20-540" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-541"><a href="#cb20-541" aria-hidden="true" tabindex="-1"></a><span class="fu">#### GUI</span></span>
+<span id="cb20-542"><a href="#cb20-542" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-543"><a href="#cb20-543" aria-hidden="true" tabindex="-1"></a>Re-run the r.hydro.flatten with parameter **max_stddev=5** to avoid flattening</span>
+<span id="cb20-544"><a href="#cb20-544" aria-hidden="true" tabindex="-1"></a>areas with standard deviation greater than 5.</span>
+<span id="cb20-545"><a href="#cb20-545" aria-hidden="true" tabindex="-1"></a>Name the resulting layer *lake_logan_1m_filled_DEM_null_above_5_stddev*.</span>
+<span id="cb20-546"><a href="#cb20-546" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-547"><a href="#cb20-547" aria-hidden="true" tabindex="-1"></a>::::: grid</span>
+<span id="cb20-548"><a href="#cb20-548" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-549"><a href="#cb20-549" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-550"><a href="#cb20-550" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-551"><a href="#cb20-551" aria-hidden="true" tabindex="-1"></a>Then find <span class="co">[</span><span class="ot">r.fillnulls</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.fillnulls.html)</span> tool</span>
+<span id="cb20-552"><a href="#cb20-552" aria-hidden="true" tabindex="-1"></a>in menu *Raster → Interpolate surfaces → Fill NULL cells*</span>
+<span id="cb20-553"><a href="#cb20-553" aria-hidden="true" tabindex="-1"></a>and call r.fillnulls with input layer *lake_logan_1m_filled_DEM*, output layer *lake_logan_1m_filled_DEM_fillnulls* and keep the rest with the default values.</span>
+<span id="cb20-554"><a href="#cb20-554" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-555"><a href="#cb20-555" aria-hidden="true" tabindex="-1"></a><span class="al">![r.fillnulls dialog](new_rfillnulls_dialog1.webp)</span></span>
+<span id="cb20-556"><a href="#cb20-556" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-557"><a href="#cb20-557" aria-hidden="true" tabindex="-1"></a>::: g-col-6</span>
+<span id="cb20-558"><a href="#cb20-558" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-559"><a href="#cb20-559" aria-hidden="true" tabindex="-1"></a><span class="al">![Open r.fillnulls dialog](new_rfillnulls.webp)</span></span>
+<span id="cb20-560"><a href="#cb20-560" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-561"><a href="#cb20-561" aria-hidden="true" tabindex="-1"></a>:::::</span>
+<span id="cb20-562"><a href="#cb20-562" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-563"><a href="#cb20-563" aria-hidden="true" tabindex="-1"></a>Finally, run <span class="co">[</span><span class="ot">r.relief</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.relief.html)</span> to see the resulting topography.</span>
+<span id="cb20-564"><a href="#cb20-564" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-565"><a href="#cb20-565" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Command line</span></span>
+<span id="cb20-566"><a href="#cb20-566" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-569"><a href="#cb20-569" aria-hidden="true" tabindex="-1"></a><span class="in">```{bash}</span></span>
+<span id="cb20-570"><a href="#cb20-570" aria-hidden="true" tabindex="-1"></a><span class="ex">r.hydro.flatten</span> input=lake_logan_1m water_elevation=lake_logan_1m_wat_elev_2dbreak water_elevation_stddev=lake_logan_1m_wat_stddev_2dbreak percentile=14 breaklines=centerlines_120_trans filled_elevation=lake_logan_1m_filled_DEM_null_above_5_stddev max_stddev=5</span>
+<span id="cb20-571"><a href="#cb20-571" aria-hidden="true" tabindex="-1"></a><span class="ex">r.fillnulls</span> input=lake_logan_1m_filled_DEM_null_above_5_stddev output=lake_logan_1m_filled_DEM_final method=rst</span>
+<span id="cb20-572"><a href="#cb20-572" aria-hidden="true" tabindex="-1"></a><span class="ex">r.relief</span> input=lake_logan_1m_filled_DEM_final output=relief</span>
+<span id="cb20-573"><a href="#cb20-573" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-574"><a href="#cb20-574" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-575"><a href="#cb20-575" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Python</span></span>
+<span id="cb20-576"><a href="#cb20-576" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-579"><a href="#cb20-579" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb20-580"><a href="#cb20-580" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb20-581"><a href="#cb20-581" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.hydro.flatten"</span>,</span>
+<span id="cb20-582"><a href="#cb20-582" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m"</span>,</span>
+<span id="cb20-583"><a href="#cb20-583" aria-hidden="true" tabindex="-1"></a>    water_elevation<span class="op">=</span><span class="st">"lake_logan_1m_wat_elev_2dbreak"</span>,</span>
+<span id="cb20-584"><a href="#cb20-584" aria-hidden="true" tabindex="-1"></a>    water_elevation_stddev<span class="op">=</span><span class="st">"lake_logan_1m_wat_stddev_2dbreak"</span>,</span>
+<span id="cb20-585"><a href="#cb20-585" aria-hidden="true" tabindex="-1"></a>    percentile<span class="op">=</span><span class="dv">14</span>,</span>
+<span id="cb20-586"><a href="#cb20-586" aria-hidden="true" tabindex="-1"></a>    breaklines<span class="op">=</span><span class="st">"centerlines_120_trans"</span>,</span>
+<span id="cb20-587"><a href="#cb20-587" aria-hidden="true" tabindex="-1"></a>    filled_elevation<span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_null_above_5_stddev"</span>,</span>
+<span id="cb20-588"><a href="#cb20-588" aria-hidden="true" tabindex="-1"></a>    max_stddev<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb20-589"><a href="#cb20-589" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-590"><a href="#cb20-590" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb20-591"><a href="#cb20-591" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.fillnulls"</span>,</span>
+<span id="cb20-592"><a href="#cb20-592" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_null_above_5_stddev"</span>,</span>
+<span id="cb20-593"><a href="#cb20-593" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_final"</span>,</span>
+<span id="cb20-594"><a href="#cb20-594" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span><span class="st">"rst"</span>,</span>
+<span id="cb20-595"><a href="#cb20-595" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-596"><a href="#cb20-596" aria-hidden="true" tabindex="-1"></a>gs.run_command(<span class="st">"r.relief"</span>, <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_final"</span>, output<span class="op">=</span><span class="st">"relief"</span>)</span>
+<span id="cb20-597"><a href="#cb20-597" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-598"><a href="#cb20-598" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-599"><a href="#cb20-599" aria-hidden="true" tabindex="-1"></a>:::::::::</span>
+<span id="cb20-600"><a href="#cb20-600" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-601"><a href="#cb20-601" aria-hidden="true" tabindex="-1"></a>::::: grid</span>
+<span id="cb20-602"><a href="#cb20-602" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-603"><a href="#cb20-603" aria-hidden="true" tabindex="-1"></a>::: g-col-4</span>
+<span id="cb20-604"><a href="#cb20-604" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-605"><a href="#cb20-605" aria-hidden="true" tabindex="-1"></a><span class="al">![Hydroflattened DEM before r.fillnulls](before_fillnuls.webp)</span></span>
+<span id="cb20-606"><a href="#cb20-606" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-607"><a href="#cb20-607" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-608"><a href="#cb20-608" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-609"><a href="#cb20-609" aria-hidden="true" tabindex="-1"></a>::: g-col-4</span>
+<span id="cb20-610"><a href="#cb20-610" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-611"><a href="#cb20-611" aria-hidden="true" tabindex="-1"></a><span class="al">![Shaded relief of the final hydro-flattened and filled DEM](relief.webp)</span></span>
+<span id="cb20-612"><a href="#cb20-612" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-613"><a href="#cb20-613" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-614"><a href="#cb20-614" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-615"><a href="#cb20-615" aria-hidden="true" tabindex="-1"></a>::: g-col-4</span>
+<span id="cb20-616"><a href="#cb20-616" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-617"><a href="#cb20-617" aria-hidden="true" tabindex="-1"></a><span class="al">![Zoomed-in on the dam and river segment](relief_zoom.webp)</span></span>
+<span id="cb20-618"><a href="#cb20-618" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-619"><a href="#cb20-619" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-620"><a href="#cb20-620" aria-hidden="true" tabindex="-1"></a>::::::</span>
+<span id="cb20-621"><a href="#cb20-621" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-622"><a href="#cb20-622" aria-hidden="true" tabindex="-1"></a><span class="fu">## Export to GeoTIFF</span></span>
+<span id="cb20-623"><a href="#cb20-623" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-624"><a href="#cb20-624" aria-hidden="true" tabindex="-1"></a>The last step is to export the filled DEM to the open standard GeoTIFF file format.</span>
+<span id="cb20-625"><a href="#cb20-625" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-626"><a href="#cb20-626" aria-hidden="true" tabindex="-1"></a>::::::::: {.panel-tabset group="language"}</span>
+<span id="cb20-627"><a href="#cb20-627" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-628"><a href="#cb20-628" aria-hidden="true" tabindex="-1"></a><span class="fu">#### GUI</span></span>
+<span id="cb20-629"><a href="#cb20-629" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-630"><a href="#cb20-630" aria-hidden="true" tabindex="-1"></a>Right click on the filled DEM layer (*lake_logan_1m_filled_DEM_final*) and select *Export*.</span>
+<span id="cb20-631"><a href="#cb20-631" aria-hidden="true" tabindex="-1"></a>This will bring up the <span class="co">[</span><span class="ot">r.out.gdal</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.out.gdal.html)</span> dialog.</span>
+<span id="cb20-632"><a href="#cb20-632" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-633"><a href="#cb20-633" aria-hidden="true" tabindex="-1"></a>Click on the browse button next to the *Name for output raster file* option</span>
+<span id="cb20-634"><a href="#cb20-634" aria-hidden="true" tabindex="-1"></a>to browse to the directory where you want the geotiff file to be written.</span>
+<span id="cb20-635"><a href="#cb20-635" aria-hidden="true" tabindex="-1"></a>Keep the default file format as GTiff (GeoTIFF).</span>
+<span id="cb20-636"><a href="#cb20-636" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-637"><a href="#cb20-637" aria-hidden="true" tabindex="-1"></a><span class="al">![](new_routgdal1.webp)</span></span>
+<span id="cb20-638"><a href="#cb20-638" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-639"><a href="#cb20-639" aria-hidden="true" tabindex="-1"></a>Click on the *Creation* tab. On this tab you can select the *Data type* and compression level for the output image.  From the Data type drop-down select *Float64*.</span>
+<span id="cb20-640"><a href="#cb20-640" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-641"><a href="#cb20-641" aria-hidden="true" tabindex="-1"></a>Then go to the *Creation option(s) to pass to the output format driver* section.</span>
+<span id="cb20-642"><a href="#cb20-642" aria-hidden="true" tabindex="-1"></a>The different options for writing out a GeoTIFF raster can be found at the</span>
+<span id="cb20-643"><a href="#cb20-643" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">GDAL GeoTiff format description page</span><span class="co">](https://gdal.org/en/latest/drivers/raster/gtiff.html)</span>.</span>
+<span id="cb20-644"><a href="#cb20-644" aria-hidden="true" tabindex="-1"></a>Type in "compress=deflate,predictor=3". Click Run.</span>
+<span id="cb20-645"><a href="#cb20-645" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-646"><a href="#cb20-646" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Command line</span></span>
+<span id="cb20-647"><a href="#cb20-647" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-650"><a href="#cb20-650" aria-hidden="true" tabindex="-1"></a><span class="in">```{bash}</span></span>
+<span id="cb20-651"><a href="#cb20-651" aria-hidden="true" tabindex="-1"></a><span class="ex">r.out.gdal</span> input=lake_logan_1m_filled_DEM_final output=lake_logan_1m_filled_DEM_final.tif format=GTiff type=Float64 createopt=<span class="st">"compress=deflate,predictor=3"</span></span>
+<span id="cb20-652"><a href="#cb20-652" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-653"><a href="#cb20-653" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-654"><a href="#cb20-654" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Python</span></span>
+<span id="cb20-655"><a href="#cb20-655" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-658"><a href="#cb20-658" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb20-659"><a href="#cb20-659" aria-hidden="true" tabindex="-1"></a>gs.run_command(</span>
+<span id="cb20-660"><a href="#cb20-660" aria-hidden="true" tabindex="-1"></a>    <span class="st">"r.out.gdal"</span>,</span>
+<span id="cb20-661"><a href="#cb20-661" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_final"</span>,</span>
+<span id="cb20-662"><a href="#cb20-662" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"lake_logan_1m_filled_DEM_final.tif"</span>,</span>
+<span id="cb20-663"><a href="#cb20-663" aria-hidden="true" tabindex="-1"></a>    <span class="bu">format</span><span class="op">=</span><span class="st">"GTiff"</span>,</span>
+<span id="cb20-664"><a href="#cb20-664" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span><span class="op">=</span><span class="st">"Float64"</span>,</span>
+<span id="cb20-665"><a href="#cb20-665" aria-hidden="true" tabindex="-1"></a>    createopt<span class="op">=</span><span class="st">"compress=deflate,predictor=3"</span>,</span>
+<span id="cb20-666"><a href="#cb20-666" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-667"><a href="#cb20-667" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb20-668"><a href="#cb20-668" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-669"><a href="#cb20-669" aria-hidden="true" tabindex="-1"></a>:::::::::</span>
+<span id="cb20-670"><a href="#cb20-670" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-671"><a href="#cb20-671" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title="Compression and large datasets"}</span>
+<span id="cb20-672"><a href="#cb20-672" aria-hidden="true" tabindex="-1"></a>Deflate compression is the most recognized lossless compression for GeoTIFFs.  It is supported by other software and is relatively fast for reads.  The predictor option allows the deflate compression to be more efficient. You can leave the GeoTIFFs uncompressed, but the file size will be about 4 times larger than the deflate compressed version.  This difference adds up as you scale this process up to larger data sets.</span>
+<span id="cb20-673"><a href="#cb20-673" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-674"><a href="#cb20-674" aria-hidden="true" tabindex="-1"></a>For GeoTIFFs larger than 4GB, you will need to use the BIGTIFF=YES option to successfully write an output raster. You may want to also add the num_threads=4 to enable the multi-threaded writing option as well.</span>
+<span id="cb20-675"><a href="#cb20-675" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb20-676"><a href="#cb20-676" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-677"><a href="#cb20-677" aria-hidden="true" tabindex="-1"></a><span class="al">![](thumbnail.webp)</span></span>
+<span id="cb20-678"><a href="#cb20-678" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-679"><a href="#cb20-679" aria-hidden="true" tabindex="-1"></a>Congratulations! You have completed this tutorial! {{&lt; fa rocket &gt;}}</span>
+<span id="cb20-680"><a href="#cb20-680" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-681"><a href="#cb20-681" aria-hidden="true" tabindex="-1"></a><span class="fu"># Resources</span></span>
+<span id="cb20-682"><a href="#cb20-682" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-683"><a href="#cb20-683" aria-hidden="true" tabindex="-1"></a>Newcomb, D. (2025). A Tutorial on Modeling Water Voids in Airborne LiDAR Point Cloud Data to Hydroflatten Water Surfaces in Digital Elevation Models. Zenodo. <span class="co">[</span><span class="ot">https://doi.org/10.5281/zenodo.17121432</span><span class="co">](https://doi.org/10.5281/zenodo.17121432)</span></span>
+<span id="cb20-684"><a href="#cb20-684" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-685"><a href="#cb20-685" aria-hidden="true" tabindex="-1"></a>***</span>
+<span id="cb20-686"><a href="#cb20-686" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-687"><a href="#cb20-687" aria-hidden="true" tabindex="-1"></a>:::{.smaller}</span>
+<span id="cb20-688"><a href="#cb20-688" aria-hidden="true" tabindex="-1"></a>The development of this tutorial was in part funded by the US</span>
+<span id="cb20-689"><a href="#cb20-689" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">National Science Foundation (NSF)</span><span class="co">](https://www.nsf.gov/)</span>,</span>
+<span id="cb20-690"><a href="#cb20-690" aria-hidden="true" tabindex="-1"></a>award <span class="co">[</span><span class="ot">2303651</span><span class="co">](https://www.nsf.gov/awardsearch/showAward?AWD_ID=2303651)</span>.</span>
+<span id="cb20-691"><a href="#cb20-691" aria-hidden="true" tabindex="-1"></a>:::</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Partially supported by US NSF <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=2303651"><img src="../../../images/logos/NSF_Official_logo_100x100.png" class="img-fluid" alt="NSF" width="45"></a></p>
+</div>   
+    <div class="nav-footer-center">
+<p>Content is dual-licensed under <a href="https://www.gnu.org/licenses/fdl-1.2.html">GFDL-1.2-or-later</a> and <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA-4.0</a></p>
+<div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/OSGeo/grass-tutorials/edit/main/content/tutorials/hydro_flattening/hydro_flatenning.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/blob/main/content/tutorials/hydro_flattening/hydro_flatenning.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item">
+    <a class="nav-link" href="https://github.com/OSGeo/grass">
+<p><i class="fa-brands fa-github" aria-label="github"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://discourse.osgeo.org/c/grass/62">
+<p><i class="fa-brands fa-discourse" aria-label="discourse"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://gitter.im/grassgis/community">
+<p><i class="fa-brands fa-gitter" aria-label="gitter"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://linkedin.com/company/grass-gis">
+<p><i class="fa-brands fa-linkedin" aria-label="linkedin"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://fosstodon.org/@grassgis">
+<p><i class="fa-brands fa-mastodon" aria-label="mastodon"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://x.com/grassgis">
+<p><i class="fa-brands fa-x-twitter" aria-label="x-twitter"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://www.youtube.com/@grass-gis">
+<p><i class="fa-brands fa-youtube" aria-label="youtube"></i></p>
+</a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>

@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Anna Petrasova">
+<meta name="dcterms.date" content="2025-09-09">
+<meta name="description" content="Wind fetch — the distance wind blows across open water — is a key factor in wave generation and shoreline exposure. We will estimate it using GRASS r.windfetch addon.">
+
+<title>Estimating Wind Fetch – (Local) Learn GRASS</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../../images/favicon.ico" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-66c3c909b4863afd39f8c1a9684862f1.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-129134f29a76a6181c5c97a8655f1195.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-66c3c909b4863afd39f8c1a9684862f1.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-a5fd71da80d94be68a097476d4858793.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-a5fd71da80d94be68a097476d4858793.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-a5fd71da80d94be68a097476d4858793.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/quarto-contrib/fontawesome6-0.1.0/all.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-contrib/fontawesome6-0.1.0/latex-fontsize.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<meta property="og:title" content="Estimating Wind Fetch – (Local) Learn GRASS">
+<meta property="og:description" content="Wind fetch — the distance wind blows across open water — is a key factor in wave generation and shoreline exposure. We will estimate it using GRASS r.windfetch addon.">
+<meta property="og:image" content="https://grass-tutorials.osgeo.org/content/tutorials/windfetch/images/thumbnail.webp">
+<meta property="og:site_name" content="(Local) Learn GRASS">
+<meta name="twitter:title" content="Estimating Wind Fetch – (Local) Learn GRASS">
+<meta name="twitter:description" content="Wind fetch — the distance wind blows across open water — is a key factor in wave generation and shoreline exposure. We will estimate it using GRASS r.windfetch addon.">
+<meta name="twitter:image" content="https://grass-tutorials.osgeo.org/content/tutorials/windfetch/images/thumbnail.webp">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../../../images/logos/small/grass-logo-white-simple@05x.png" alt="Small sized GRASS icon colored white with GRASS shape" class="navbar-logo light-content">
+    <img src="../../../images/logos/small/grass-logo-green-simple@05x.png" alt="Small sized GRASS icon colored GRASS green with GRASS shape" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../../../index.html">
+    <span class="navbar-title">Learn GRASS</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+    <div class="dropdown">
+      <a href="" title="" id="quarto-navigation-tool-dropdown-0" class="quarto-navigation-tool dropdown-toggle px-1" data-bs-toggle="dropdown" aria-expanded="false" role="link" aria-label=""><i class="bi bi-github"></i></a>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quarto-navigation-tool-dropdown-0">
+          <li>
+            <a class="dropdown-item quarto-navbar-tools-item" href="https://github.com/OSGeo/grass-tutorials">
+            Source Code
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item quarto-navbar-tools-item" href="https://github.com/OSGeo/grass-tutorials/issues">
+            Report an Issue
+            </a>
+          </li>
+      </ul>
+    </div>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar"><div class="quarto-margin-header"><div class="margin-header-item">
+<p><a href="https://numfocus.org/donate-to-grass" class="btn btn-outline-support" role="button" data-align="center"><i class="fa-solid fa-heart" aria-label="heart"></i> Support GRASS</a></p>
+</div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of Contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a>
+  <ul class="collapse">
+  <li><a href="#study-area" id="toc-study-area" class="nav-link" data-scroll-target="#study-area">Study area</a></li>
+  <li><a href="#elevation-data" id="toc-elevation-data" class="nav-link" data-scroll-target="#elevation-data">Elevation data</a></li>
+  <li><a href="#wind-data" id="toc-wind-data" class="nav-link" data-scroll-target="#wind-data">Wind data</a></li>
+  </ul></li>
+  <li><a href="#wind-fetch-analysis-for-a-single-point" id="toc-wind-fetch-analysis-for-a-single-point" class="nav-link" data-scroll-target="#wind-fetch-analysis-for-a-single-point">Wind fetch analysis for a single point</a></li>
+  <li><a href="#wind-fetch-for-points-along-a-coastline" id="toc-wind-fetch-for-points-along-a-coastline" class="nav-link" data-scroll-target="#wind-fetch-for-points-along-a-coastline">Wind fetch for points along a coastline</a>
+  <ul class="collapse">
+  <li><a href="#visualization" id="toc-visualization" class="nav-link" data-scroll-target="#visualization">Visualization</a></li>
+  </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  <li><a href="#acknowledgements" id="toc-acknowledgements" class="nav-link" data-scroll-target="#acknowledgements">Acknowledgements</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/OSGeo/grass-tutorials/edit/main/content/tutorials/windfetch/windfetch.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/blob/main/content/tutorials/windfetch/windfetch.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="windfetch.ipynb" download="windfetch.ipynb"><i class="bi bi-journal-code"></i>Jupyter</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Estimating Wind Fetch</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">Python</div>
+    <div class="quarto-category">advanced</div>
+    <div class="quarto-category">ecology</div>
+    <div class="quarto-category">engineering</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    <p>Wind fetch — the distance wind blows across open water — is a key factor in wave generation and shoreline exposure. We will estimate it using GRASS r.windfetch addon.</p>
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Anna Petrasova </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 9, 2025</p>
+    </div>
+  </div>
+  
+    <div>
+    <div class="quarto-title-meta-heading">Modified</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date-modified">October 14, 2026</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><img src="images/photo.webp" class="img-fluid"></p>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>Wind fetch — the distance wind blows across open water — is a key factor in wave generation and shoreline exposure. It is widely used in coastal engineering to estimate wave height, and in ecology to assess habitat vulnerability to wave energy. This tutorial demonstrates how to use the <a href="https://grass.osgeo.org/grass-stable/manuals/addons/r.windfetch.html">r.windfetch</a> addon in GRASS to compute fetch lengths for a case study on the North Carolina coast.</p>
+<p>We will:</p>
+<ul>
+<li>Set up a GRASS project for North Carolina.</li>
+<li>Import elevation data to derive land and water areas.</li>
+<li>Download a wind rose.</li>
+<li>Estimate a weighted wind fetch for a selected point on the coast.</li>
+<li>Derive weighted wind fetch for part of the coastline.</li>
+<li>Visualize the results.</li>
+</ul>
+<p>This approach demonstrates how to leverage new Python API features introduced in GRASS 8.5—specifically, the <a href="https://grass.osgeo.org/grass-devel/manuals/libpython/grass.tools.html#">Tools API</a> and the <a href="https://grass.osgeo.org/grass-devel/manuals/libpython/grass.script.html#grass.script.RegionManager">RegionManager</a> context manager.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="How to run this tutorial?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>How to run this tutorial?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This tutorial is prepared to be run in a Jupyter notebook locally or using services such as Google Colab. You can <a href="windfetch.ipynb">download the notebook here</a>.</p>
+<p>If you are not sure how to get started with GRASS, checkout the tutorials <a href="../../../content/tutorials/get_started/fast_track_grass_and_python.html">Get started with GRASS &amp; Python in Jupyter Notebooks</a> and <a href="../../../content/tutorials/get_started/grass_gis_in_google_colab.html">Get started with GRASS in Google Colab</a>.</p>
+</div>
+</div>
+</section>
+<section id="setup" class="level1">
+<h1>Setup</h1>
+<p>Start with importing Python packages. To import the <em>grass</em> package, you need to tell Python where the GRASS Python package is (can be skipped for some environments).</p>
+<div id="e1edf6a5" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># import standard Python packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># check where GRASS python packages are and add them to PATH</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>sys.path.append(</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    subprocess.check_output([<span class="st">"grass"</span>, <span class="st">"--config"</span>, <span class="st">"python_path"</span>], text<span class="op">=</span><span class="va">True</span>).strip()</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># import GRASS python packages</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> grass.script <span class="im">as</span> gs</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> grass.jupyter <span class="im">as</span> gj</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> grass.tools <span class="im">import</span> Tools</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We will switch our working directory to a directory with enough space, this is where we will download the datasets and create our GRASS project.</p>
+<pre><code>os.chdir("path/to/data")</code></pre>
+<p>Now create a GRASS project called <em>windfetch</em> with a Coordinate Reference System (CRS) used in North Carolina (<a href="https://spatialreference.org/ref/epsg/32119/">EPSG 32119</a>). We create a new GRASS project for the tutorial. The EPSG code 32119 corresponds to NAD83 / North Carolina, a suitable projection for working in this region. Then we initialize the GRASS session in Jupyter, pointing it to the newly created project. This sets up the working environment.</p>
+<div id="39b6d4f4" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>gs.create_project(<span class="st">"windfetch"</span>, epsg<span class="op">=</span><span class="st">"32119"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>gj.init(<span class="st">"windfetch"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="study-area" class="level2">
+<h2 class="anchored" data-anchor-id="study-area">Study area</h2>
+<p>We download a shapefile of US state boundaries from the <a href="(https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html)">U.S. Census Bureau TIGER/Line dataset</a>. This gives us a polygon map of all states, from which we can extract North Carolina. This data will help us define our study area.</p>
+<div id="b69e6bf5" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> urllib.request</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> zipfile</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_state_20m.zip"</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>states_filename, headers <span class="op">=</span> urllib.request.urlretrieve(url)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> zipfile.ZipFile(states_filename, <span class="st">"r"</span>) <span class="im">as</span> zip_ref:</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    zip_ref.extractall()</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>os.remove(states_filename)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>states_filename <span class="op">=</span> Path(url).with_suffix(<span class="st">".shp"</span>).name</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We create a Tools object that lets us call GRASS tools as Python functions (e.g., tools.v_import instead of running v.import at the command line).</p>
+<div id="b97ddb82" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>tools <span class="op">=</span> Tools()</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>tools.v_import(<span class="bu">input</span><span class="op">=</span>states_filename, output<span class="op">=</span><span class="st">"states"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Running GRASS 8.4?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Running GRASS 8.4?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This tutorial uses new API available since GRASS 8.5. If you are running GRASS 8.4, you can use the <a href="https://grass.osgeo.org/grass-devel/manuals/python_intro.html#shell-like-tool-calling">shell-like tool calling API</a> instead. So instead of <code>tools.v_import(input=states_filename, output="states")</code>, you can use <code>gs.run_command("v.import", input=states_filename, output="states")</code>.</p>
+</div>
+</div>
+<p>We query the attribute table of the states map and display it as a Pandas DataFrame. This lets us inspect column and state names.</p>
+<div id="b8a3a947" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(tools.v_db_select(<span class="bu">map</span><span class="op">=</span><span class="st">"states"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>)[<span class="st">"records"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/states.webp" class="img-fluid figure-img"></p>
+<figcaption>US states DataFrame</figcaption>
+</figure>
+</div>
+<p>We extract North Carolina boundaries into a new vector map <em>NC</em> and display the North Carolina polygon in an interactive map widget, verifying that the state boundary was exported correctly.</p>
+<div id="6e3a7eac" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>tools.v_extract(<span class="bu">input</span><span class="op">=</span><span class="st">"states"</span>, output<span class="op">=</span><span class="st">"NC"</span>, where<span class="op">=</span><span class="st">"name == 'North Carolina'"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>NC_map <span class="op">=</span> gj.InteractiveMap()</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>NC_map.add_vector(<span class="st">"NC"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>NC_map.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Providing you have <a href="https://ipyleaflet.readthedocs.io/">ipyleaflet</a> installed, you can interactively set the extent of the computational region, selecting area around Core Sound, part of the Outer Banks of North Carolina. You need to select sufficiently large area to allow for the correct fetch computation. You can also set the region directly:</p>
+<div id="264ba155" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>tools.g_region(n<span class="op">=</span><span class="dv">152610</span>, s<span class="op">=</span><span class="dv">94020</span>, w<span class="op">=</span><span class="dv">811200</span>, e<span class="op">=</span><span class="dv">876330</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/region.webp" class="img-fluid figure-img"></p>
+<figcaption>Setting computational region interactively</figcaption>
+</figure>
+</div>
+</section>
+<section id="elevation-data" class="level2">
+<h2 class="anchored" data-anchor-id="elevation-data">Elevation data</h2>
+<p>One of the important inputs to r.windfetch is a binary raster representing land (1) and water (0). If the land polygons are not readily available, or they are not detailed enough, this raster can be easily derived from an elevation raster.</p>
+<p>We install the <a href="https://grass.osgeo.org/grass-devel/manuals/addons/r.in.usgs.html">r.in.usgs</a> addon, which provides convenient access to elevation data (USGS NED/3DEP) directly from within GRASS.</p>
+<div id="5f119dc1" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>tools.g_extension(extension<span class="op">=</span><span class="st">"r.in.usgs"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This addon will download elevation data based on the extent of the current computational region. The resolution of the imported dataset is set automatically based on the type of elevation product. In our case we will use the 1 arc-second NED product corresponding to approximately 30 meters.</p>
+<p>We run r.in.usgs with the -i flag to list available elevation datasets (here, the NED product). This lets us see what tiles are available for our region (the output may be different in the future as the data is updated by USGS).</p>
+<div id="d12b1235" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_in_usgs(flags<span class="op">=</span><span class="st">"i"</span>, product<span class="op">=</span><span class="st">"ned"</span>, ned_dataset<span class="op">=</span><span class="st">"ned1sec"</span>).text)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<pre class="text"><code>USGS file(s) to download:
+-------------------------
+Total download size:    58.40 MB
+Tile count: 4
+USGS SRS:   wgs84
+USGS tile titles:
+USGS 1 Arc Second n35w077 20250507
+USGS 1 Arc Second n36w077 20250507
+USGS 1 arc-second n35w077 1 x 1 degree
+USGS 1 arc-second n36w077 1 x 1 degree
+-------------------------</code></pre>
+<p>We remove the flag and rerun r.in.usgs to actually download and import the data. We filter the data to only include the tiles with “degree” in the title name.</p>
+<div id="1f3522f7" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>tools.r_in_usgs(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    product<span class="op">=</span><span class="st">"ned"</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    output_name<span class="op">=</span><span class="st">"ned"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    ned_dataset<span class="op">=</span><span class="st">"ned1sec"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    title_filter<span class="op">=</span><span class="st">"degree"</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    nprocs<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Let’s look at the data we just downloaded. We will display only elevation values larger than 0:</p>
+<div id="0ee3b51a" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ned_map <span class="op">=</span> gj.Map()</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>ned_map.d_background(color<span class="op">=</span><span class="st">"aqua"</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>ned_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"ned"</span>, values<span class="op">=</span><span class="st">"0.0001-100"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>ned_map.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/ned.webp" class="img-fluid figure-img"></p>
+<figcaption>Elevation data</figcaption>
+</figure>
+</div>
+<p>Set computational region to match the extent and resolution of the NED dataset.</p>
+<div id="6de1dd78" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>tools.g_region(raster<span class="op">=</span><span class="st">"ned"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We derive the land/water raster using raster algebra with <a href="https://grass.osgeo.org/grass-devel/manuals/r.mapcalc.html">r.mapcalc</a>. Values above sea level are set to 1 (land), while sea level and below are 0 (water). This prepares the key input raster for r.windfetch.</p>
+<div id="0de4a71b" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"land = if(ned &gt; 0, 1, 0)"</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>ned_map <span class="op">=</span> gj.Map()</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>ned_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"land"</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>ned_map.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/land.webp" class="img-fluid figure-img"></p>
+<figcaption>Land/water raster</figcaption>
+</figure>
+</div>
+</section>
+<section id="wind-data" class="level2">
+<h2 class="anchored" data-anchor-id="wind-data">Wind data</h2>
+<p>Wind roses show the frequency of winds from different directions, and at different speeds, over a given period of time (<a href="https://airquality.climate.ncsu.edu/wind/">NC Air Quality Portal</a>). We will use this information to compute wind fetch weighted by the percentage of wind observed from the different directions.</p>
+<p>We will use wind rose dataset (CSV) for station KMRH (Beaufort, NC) that is near our study area. The file can be downloaded <a href="windrose_KMRH_2001-07-05_2025-09-01.csv">here</a> or accessed from <a href="https://airquality.climate.ncsu.edu/wind/">NC Air Quality Portal</a>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/windrose_KMRH_2001-07-05_2025-09-01.webp" class="img-fluid figure-img"></p>
+<figcaption>Wind rose for Beaufort, NC</figcaption>
+</figure>
+</div>
+<p>First, read the CSV file into a Pandas DataFrame.</p>
+<div id="d6a15117" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>wind_df <span class="op">=</span> pd.read_csv(<span class="st">"windrose_KMRH_2001-07-05_2025-09-01.csv"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>wind_df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We calculate the total frequency of winds per direction sector by summing across the available columns. This gives us the relative importance of each direction.</p>
+<div id="98b763ca" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>wind_df[<span class="st">"total"</span>] <span class="op">=</span> wind_df.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>, numeric_only<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We add a directions column, assigning compass angles to each wind sector. Here, each sector is 22.5° apart (16 sectors total). We round the angles to integers to match the integer directions used by r.windfetch.</p>
+<p>We also convert wind directions from the meteorological “from” convention to the “to” convention by adding 180°, so they align with fetch measurements pointing toward open water.</p>
+<div id="5acf6fd0" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>wind_df[<span class="st">"directions"</span>] <span class="op">=</span> [<span class="bu">round</span>(i <span class="op">*</span> <span class="fl">22.5</span>) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(wind_df))]</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>wind_df[<span class="st">"directions"</span>] <span class="op">=</span> (wind_df[<span class="st">"directions"</span>] <span class="op">+</span> <span class="dv">180</span>) <span class="op">%</span> <span class="dv">360</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>wind_df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/wind_df.webp" class="img-fluid figure-img"></p>
+<figcaption>Wind DataFrame</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="wind-fetch-analysis-for-a-single-point" class="level1">
+<h1>Wind fetch analysis for a single point</h1>
+<p>We install r.windfetch addon, which computes wind fetch distances over water for given input points and directions.</p>
+<div id="ce958352" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>tools.g_extension(extension<span class="op">=</span><span class="st">"r.windfetch"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We will select a point interactively and export to a vector map <em>point</em>. Make sure the point is located somewhere along the coast on water, not land. This point will serve as a location to compute wind fetch in different directions.</p>
+<div id="128339be" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>ned_map <span class="op">=</span> gj.InteractiveMap()</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>ned_map.add_raster(<span class="st">"land"</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>ned_map.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/point.webp" class="img-fluid figure-img"></p>
+<figcaption>Interactive point selection</figcaption>
+</figure>
+</div>
+<p>Alternatively create a vector point with:</p>
+<div id="a4e82022" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>tools.v_in_ascii(<span class="bu">input</span><span class="op">=</span>io.StringIO(<span class="st">"838658,112214"</span>), output<span class="op">=</span><span class="st">"point"</span>, separator<span class="op">=</span><span class="st">"comma"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <em>effective fetch</em> is computed by averaging multiple radials spread around the main wind direction. In r.windfetch, this is controlled by two parameters:</p>
+<ul>
+<li><strong>minor_directions</strong> – total number of radials used to compute effective fetch (including the central/main radial).</li>
+<li><strong>minor_step</strong> – angular spacing between adjacent radials (in degrees).</li>
+</ul>
+<p>Common configurations (based on U.S. Army Corps of Engineers Shore Protection Manual):</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Method</th>
+<th style="text-align: right;">minor_directions</th>
+<th style="text-align: right;">minor_step</th>
+<th style="text-align: right;">arc width</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>SPM</strong></td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">3°</td>
+<td style="text-align: right;">24°</td>
+</tr>
+<tr class="even">
+<td><strong>SPM-restricted</strong></td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3°</td>
+<td style="text-align: right;">12°</td>
+</tr>
+<tr class="odd">
+<td><strong>Single radial</strong></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">–</td>
+<td style="text-align: right;">0°</td>
+</tr>
+</tbody>
+</table>
+<p>The broader arc (SPM) generally better reflects real-world spreading of wave energy, while the narrower arc (SPM-restricted) can be more appropriate in environments with long, narrow fetches such as estuaries or channels.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/methods.webp" class="img-fluid figure-img"></p>
+<figcaption>Wind fetch methods (Rohweder et al.&nbsp;2012)</figcaption>
+</figure>
+</div>
+<p>We run r.windfetch from the selected point with the SPM configuration. The output is returned as JSON, which we capture in a Python dictionary. Flag <em>c</em> tells r.windfetch to use compass directions (clockwise from North).</p>
+<div id="d552da5c" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>point_fetch <span class="op">=</span> tools.r_windfetch(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"land"</span>,</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    points<span class="op">=</span><span class="st">"point"</span>,</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>,</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    step<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    minor_directions<span class="op">=</span><span class="dv">9</span>,</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    minor_step<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="st">"c"</span>,</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>)[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We convert the r.windfetch output into a Pandas DataFrame for easier inspection. Each row corresponds to a direction and its computed fetch length (in meters).</p>
+<div id="9c0ede87" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>fetch_df <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"directions"</span>: point_fetch[<span class="st">"directions"</span>], <span class="st">"fetch"</span>: point_fetch[<span class="st">"fetch"</span>]}</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>fetch_df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We create a polar plot (rose diagram) of fetch lengths. This visualization shows, for the selected point, how far wind can blow unobstructed in different directions. Image below shows a rose diagram for the SPM and SPM-restricted configurations.</p>
+<div id="aeaa84ec" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>directions <span class="op">=</span> np.deg2rad(point_fetch[<span class="st">"directions"</span>])</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plt.subplot(<span class="dv">111</span>, polar<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>ax.plot(directions, point_fetch[<span class="st">"fetch"</span>], marker<span class="op">=</span><span class="st">"o"</span>, linestyle<span class="op">=</span><span class="st">"-"</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>ax.fill(directions, point_fetch[<span class="st">"fetch"</span>], alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>ax.set_theta_zero_location(<span class="st">"E"</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>ax.set_theta_direction(<span class="dv">1</span>)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Wind fetch"</span>, va<span class="op">=</span><span class="st">"bottom"</span>)</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/plot_spm.webp" class="img-fluid figure-img"></p>
+<figcaption>SPM</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/plot_restricted.webp" class="img-fluid figure-img"></p>
+<figcaption>SPM-restricted</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<p>We join the wind rose data with the fetch results by matching directions. This allows us to combine how often wind blows from a direction with how far it can travel.</p>
+<div id="5561f25d" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> pd.merge(wind_df, fetch_df, on<span class="op">=</span><span class="st">"directions"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We compute weighted fetch: multiplying fetch length by wind frequency (percentage). This creates an effective measure of wave-generating potential.</p>
+<div id="483baa60" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">"weighted_fetch"</span>] <span class="op">=</span> merged_df[<span class="st">"fetch"</span>] <span class="op">*</span> merged_df[<span class="st">"total"</span>] <span class="op">/</span> <span class="dv">100</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We calculate the overall effective fetch for the point by summing across all wind directions. This produces a single index summarizing wave exposure, integrating both shoreline geometry and real wind climate.</p>
+<div id="fc92293b" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">"weighted_fetch"</span>].<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>At this point, the tutorial has shown a full workflow: preparing data, running r.windfetch, and combining with wind rose data.</p>
+</section>
+<section id="wind-fetch-for-points-along-a-coastline" class="level1">
+<h1>Wind fetch for points along a coastline</h1>
+<p>Now we will create vector point map with points along a coastline. We will select only part of the coastline, focusing on a section of Carteret county, North Carolina, within our study area. Specifically we will select a single census tract.</p>
+<p>Download NC tract boundaries:</p>
+<div id="21ac885a" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://www2.census.gov/geo/tiger/TIGER2024/TRACT/tl_2024_37_tract.zip"</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>tracts_filename, headers <span class="op">=</span> urllib.request.urlretrieve(url)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> zipfile.ZipFile(tracts_filename, <span class="st">"r"</span>) <span class="im">as</span> zip_ref:</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    zip_ref.extractall()</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>os.remove(tracts_filename)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>tracts_filename <span class="op">=</span> Path(url).with_suffix(<span class="st">".shp"</span>).name</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We will import only tracts that fall in our study area (i.e.&nbsp;within our current computational region extent).</p>
+<div id="4c5f78aa" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>tools.v_import(<span class="bu">input</span><span class="op">=</span>tracts_filename, output<span class="op">=</span><span class="st">"tracts"</span>, extent<span class="op">=</span><span class="st">"region"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Display the tracts, select one and and find its GEOID:</p>
+<div id="b9aa569a" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>point_map <span class="op">=</span> gj.InteractiveMap()</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>point_map.add_vector(<span class="st">"tracts"</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>point_map.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/tract.webp" class="img-fluid figure-img"></p>
+<figcaption>Query map of tracts</figcaption>
+</figure>
+</div>
+<p>Extract the tract:</p>
+<div id="2db74a86" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>tools.v_extract(<span class="bu">input</span><span class="op">=</span><span class="st">"tracts"</span>, output<span class="op">=</span><span class="st">"tract"</span>, where<span class="op">=</span><span class="st">"GEOID = 37031970103"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We will create a vector map of points along the coastline by first growing a single-cell buffer along the coast. This ensures the points fall on water. The buffer cells are then vectorized into points. The <a href="https://grass.osgeo.org/grass-devel/manuals/r.buffer.html">r.buffer</a> tool creates cells with value 1 (original land) and value 2 (buffer). We set cells with value 1 to null, leaving only the coastal points.</p>
+<p>We use a <a href="https://grass.osgeo.org/grass-devel/manuals/libpython/grass.script.html#grass.script.RegionManager">RegionManager</a> context manager to temporarily set the computational region extent to the tract vector and aligning the raster grid to the land map. This ensures that the buffer is computed only within the tract extent but the fetch analysis will be using land data on the full study area.</p>
+<div id="9b7efad0" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> gs.RegionManager(vector<span class="op">=</span><span class="st">"tract"</span>, align<span class="op">=</span><span class="st">"land"</span>):</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    tools.r_buffer(flags<span class="op">=</span><span class="st">"z"</span>, <span class="bu">input</span><span class="op">=</span><span class="st">"land"</span>, output<span class="op">=</span><span class="st">"buffer"</span>, distances<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    tools.r_null(<span class="bu">map</span><span class="op">=</span><span class="st">"buffer"</span>, setnull<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    tools.r_to_vect(flags<span class="op">=</span><span class="st">"t"</span>, <span class="bu">input</span><span class="op">=</span><span class="st">"buffer"</span>, output<span class="op">=</span><span class="st">"points"</span>, <span class="bu">type</span><span class="op">=</span><span class="st">"point"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Next, we compute the wind fetch for each point in the vector map using the SPM setting.</p>
+<div id="473d1b11" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>points_fetch <span class="op">=</span> tools.r_windfetch(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"land"</span>,</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    points<span class="op">=</span><span class="st">"points"</span>,</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>,</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    step<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    minor_directions<span class="op">=</span><span class="dv">9</span>,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    minor_step<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="st">"c"</span>,</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Similarly to the previous example, we will load fetch data into a Pandas DataFrame. Since we are getting a list (fetch data for each point), we will use the <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.explode.html">explode</a> function to transform the list into a DataFrame.</p>
+<div id="ff2f4a38" class="cell" data-execution_count="32">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>fetch_df <span class="op">=</span> pd.DataFrame(points_fetch)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>fetch_df <span class="op">=</span> fetch_df.explode([<span class="st">"directions"</span>, <span class="st">"fetch"</span>], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>fetch_df <span class="op">=</span> fetch_df.rename(columns<span class="op">=</span>{<span class="st">"directions"</span>: <span class="st">"directions"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We will join the wind rose data with the fetch results by matching directions.</p>
+<div id="dc53155f" class="cell" data-execution_count="33">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> pd.merge(wind_df, fetch_df, on<span class="op">=</span><span class="st">"directions"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">"weighted_fetch"</span>] <span class="op">=</span> merged_df[<span class="st">"fetch"</span>] <span class="op">*</span> merged_df[<span class="st">"total"</span>] <span class="op">/</span> <span class="dv">100</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>merged_df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We can now calculate the overall effective fetch for each point by summing across all wind directions.</p>
+<div id="d339ed53" class="cell" data-execution_count="34">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> merged_df.groupby([<span class="st">"x"</span>, <span class="st">"y"</span>], as_index<span class="op">=</span><span class="va">False</span>)[<span class="st">"weighted_fetch"</span>].<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="visualization" class="level2">
+<h2 class="anchored" data-anchor-id="visualization">Visualization</h2>
+<p>Final step is visualizing the data in a web map.</p>
+<p>We will convert the DataFrame to GeoJSON in EPSG:4326. First, we will create a CSV text file from the DataFrame and convert it into a GRASS vector map. Then, we will convert the vector map to GeoJSON, ensuring the CRS is set to EPSG:4326 (ensured by specifying the RFC7946 standard).</p>
+<div id="5050395e" class="cell" data-execution_count="35">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>merged_df.to_csv(<span class="st">"results.txt"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>tools.v_in_ascii(</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"results.txt"</span>,</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"results"</span>,</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    separator<span class="op">=</span><span class="st">"comma"</span>,</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="st">"x double, y double, fetch double"</span>,</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    skip<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>tools.v_out_ogr(</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"results"</span>, output<span class="op">=</span><span class="st">"results.json"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"GeoJSON"</span>, lco<span class="op">=</span><span class="st">"RFC7946=YES"</span></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We will use <a href="https://python-visualization.github.io/folium/">folium</a> to create an interactive map. The darker colors represent higher fetch values.</p>
+<div id="5e759eec" class="cell" data-execution_count="36">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> geopandas <span class="im">as</span> gpd</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> folium</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> branca.colormap <span class="im">as</span> cm</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Load GeoJSON</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>gdf <span class="op">=</span> gpd.read_file(<span class="st">"results.json"</span>)</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>values <span class="op">=</span> gdf[<span class="st">"fetch"</span>]</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>colormap <span class="op">=</span> cm.linear.YlGnBu_07.scale(values.<span class="bu">min</span>(), values.<span class="bu">max</span>())</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>colormap.caption <span class="op">=</span> <span class="st">"Weighted Fetch"</span></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Center map at the mean location</span></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> folium.Map(</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>    location<span class="op">=</span>[gdf.geometry.y.mean(), gdf.geometry.x.mean()],</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>    zoom_start<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>    tiles<span class="op">=</span><span class="st">"CartoDB positron"</span>,</span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Add points</span></span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _, row <span class="kw">in</span> gdf.iterrows():</span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>    folium.CircleMarker(</span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>        location<span class="op">=</span>(row.geometry.y, row.geometry.x),</span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>        radius<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a>        weight<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a>        fill<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a>        fill_color<span class="op">=</span>colormap(row[<span class="st">"fetch"</span>]),</span>
+<span id="cb38-27"><a href="#cb38-27" aria-hidden="true" tabindex="-1"></a>        fill_opacity<span class="op">=</span><span class="fl">0.7</span>,</span>
+<span id="cb38-28"><a href="#cb38-28" aria-hidden="true" tabindex="-1"></a>        tooltip<span class="op">=</span><span class="ss">f"Weighted Fetch: </span><span class="sc">{</span>row[<span class="st">'fetch'</span>]<span class="sc">:.2f}</span><span class="ss">"</span></span>
+<span id="cb38-29"><a href="#cb38-29" aria-hidden="true" tabindex="-1"></a>    ).add_to(m)</span>
+<span id="cb38-30"><a href="#cb38-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-31"><a href="#cb38-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Add colormap legend</span></span>
+<span id="cb38-32"><a href="#cb38-32" aria-hidden="true" tabindex="-1"></a>colormap.add_to(m)</span>
+<span id="cb38-33"><a href="#cb38-33" aria-hidden="true" tabindex="-1"></a>m</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/thumbnail.webp" class="img-fluid figure-img"></p>
+<figcaption>Final weighted wind fetch map</figcaption>
+</figure>
+</div>
+<p>Note that estuaries have much lower fetch values, while the highest fetch occurs along the east coast of Bells and Davis Islands, driven by the northeast orientation of Core Sound and the prevailing winds.</p>
+</section>
+</section>
+<section id="references" class="level1">
+<h1>References</h1>
+<ul>
+<li>Rohweder, J., Rogala, J. T., Johnson, B. L., Anderson, D., Clark, S., Chamberlin, F., Potter, D., and Runyon, K., 2012, <a href="https://www.umesc.usgs.gov/management/dss/wind_fetch_wave/wind_fetch_wave_2012update/wind_wave_2012_update_070814.pdf">Application of Wind Fetch and Wave Models for Habitat Rehabilitation and Enhancement Projects – 2012 Update</a>. Contract report prepared for U.S. Army Corps of Engineers’ Upper Mississippi River Restoration – Environmental Management Program. 52 p.</li>
+</ul>
+</section>
+<section id="acknowledgements" class="level1">
+<h1>Acknowledgements</h1>
+<p>The development of this tutorial was supported by NSF Award #2322073, granted to Natrx, Inc.</p>
+<p>NC coastline photo by <a href="https://unsplash.com/@samuelcruz?utm_content=creditCopyText&amp;utm_medium=referral&amp;utm_source=unsplash">Samuel Cruz</a> on <a href="https://unsplash.com/photos/a-beach-with-houses-and-water-danWxMtwW_g?utm_content=creditCopyText&amp;utm_medium=referral&amp;utm_source=unsplash">Unsplash</a>.</p>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/grass-tutorials\.osgeo\.org");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Estimating Wind Fetch"</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Anna Petrasova"</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> 2025-09-09</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="an">date-modified:</span><span class="co"> today</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [Python, advanced, ecology, engineering]</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> &gt;</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a><span class="co">  Wind fetch — the distance wind blows across open water — is a key factor in wave generation and shoreline exposure. We will estimate it using GRASS r.windfetch addon.</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="an">image:</span><span class="co"> images/thumbnail.webp</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="an">resources:</span><span class="co"> windrose_KMRH_2001-07-05_2025-09-01.csv</span></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a><span class="co">  ipynb: default</span></span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: false</span></span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> jupyter</span></span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a><span class="co">  eval: false</span></span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a><span class="al">![](images/photo.webp)</span></span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a><span class="fu"># Introduction</span></span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>Wind fetch — the distance wind blows across open water — is a key factor in wave generation and shoreline exposure. It is widely used in coastal engineering to estimate wave height, and in ecology to assess habitat vulnerability to wave energy. This tutorial demonstrates how to use the </span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.windfetch</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/addons/r.windfetch.html)</span> addon in GRASS to compute fetch lengths for a case study on the North Carolina coast.</span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>We will:</span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Set up a GRASS project for North Carolina.</span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Import elevation data to derive land and water areas.</span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Download a wind rose.</span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Estimate a weighted wind fetch for a selected point on the coast.</span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Derive weighted wind fetch for part of the coastline.</span>
+<span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Visualize the results.</span>
+<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-41"><a href="#cb39-41" aria-hidden="true" tabindex="-1"></a>This approach demonstrates how to leverage new Python API features introduced</span>
+<span id="cb39-42"><a href="#cb39-42" aria-hidden="true" tabindex="-1"></a>in GRASS 8.5—specifically, the <span class="co">[</span><span class="ot">Tools API</span><span class="co">](https://grass.osgeo.org/grass-devel/manuals/libpython/grass.tools.html#)</span></span>
+<span id="cb39-43"><a href="#cb39-43" aria-hidden="true" tabindex="-1"></a>and the <span class="co">[</span><span class="ot">RegionManager</span><span class="co">](https://grass.osgeo.org/grass-devel/manuals/libpython/grass.script.html#grass.script.RegionManager)</span></span>
+<span id="cb39-44"><a href="#cb39-44" aria-hidden="true" tabindex="-1"></a>context manager.</span>
+<span id="cb39-45"><a href="#cb39-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-46"><a href="#cb39-46" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title="How to run this tutorial?"}</span>
+<span id="cb39-47"><a href="#cb39-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-48"><a href="#cb39-48" aria-hidden="true" tabindex="-1"></a>This tutorial is prepared to be run in a Jupyter notebook locally</span>
+<span id="cb39-49"><a href="#cb39-49" aria-hidden="true" tabindex="-1"></a>or using services such as Google Colab. You can <span class="co">[</span><span class="ot">download the notebook here</span><span class="co">](windfetch.ipynb)</span>.</span>
+<span id="cb39-50"><a href="#cb39-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-51"><a href="#cb39-51" aria-hidden="true" tabindex="-1"></a>If you are not sure how to get started with GRASS, checkout the tutorials <span class="co">[</span><span class="ot">Get started with GRASS &amp; Python in Jupyter Notebooks</span><span class="co">](../get_started/fast_track_grass_and_python.qmd)</span></span>
+<span id="cb39-52"><a href="#cb39-52" aria-hidden="true" tabindex="-1"></a>and <span class="co">[</span><span class="ot">Get started with GRASS in Google Colab</span><span class="co">](../get_started/grass_gis_in_google_colab.qmd)</span>.</span>
+<span id="cb39-53"><a href="#cb39-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-54"><a href="#cb39-54" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb39-55"><a href="#cb39-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-56"><a href="#cb39-56" aria-hidden="true" tabindex="-1"></a><span class="fu"># Setup</span></span>
+<span id="cb39-57"><a href="#cb39-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-58"><a href="#cb39-58" aria-hidden="true" tabindex="-1"></a>Start with importing Python packages.</span>
+<span id="cb39-59"><a href="#cb39-59" aria-hidden="true" tabindex="-1"></a>To import the _grass_ package, you need to tell Python where the GRASS Python package is</span>
+<span id="cb39-60"><a href="#cb39-60" aria-hidden="true" tabindex="-1"></a>(can be skipped for some environments).</span>
+<span id="cb39-61"><a href="#cb39-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-64"><a href="#cb39-64" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-65"><a href="#cb39-65" aria-hidden="true" tabindex="-1"></a><span class="co"># import standard Python packages</span></span>
+<span id="cb39-66"><a href="#cb39-66" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb39-67"><a href="#cb39-67" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb39-68"><a href="#cb39-68" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb39-69"><a href="#cb39-69" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb39-70"><a href="#cb39-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-71"><a href="#cb39-71" aria-hidden="true" tabindex="-1"></a><span class="co"># check where GRASS python packages are and add them to PATH</span></span>
+<span id="cb39-72"><a href="#cb39-72" aria-hidden="true" tabindex="-1"></a>sys.path.append(</span>
+<span id="cb39-73"><a href="#cb39-73" aria-hidden="true" tabindex="-1"></a>    subprocess.check_output([<span class="st">"grass"</span>, <span class="st">"--config"</span>, <span class="st">"python_path"</span>], text<span class="op">=</span><span class="va">True</span>).strip()</span>
+<span id="cb39-74"><a href="#cb39-74" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb39-75"><a href="#cb39-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-76"><a href="#cb39-76" aria-hidden="true" tabindex="-1"></a><span class="co"># import GRASS python packages</span></span>
+<span id="cb39-77"><a href="#cb39-77" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> grass.script <span class="im">as</span> gs</span>
+<span id="cb39-78"><a href="#cb39-78" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> grass.jupyter <span class="im">as</span> gj</span>
+<span id="cb39-79"><a href="#cb39-79" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> grass.tools <span class="im">import</span> Tools</span>
+<span id="cb39-80"><a href="#cb39-80" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-81"><a href="#cb39-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-82"><a href="#cb39-82" aria-hidden="true" tabindex="-1"></a>We will switch our working directory to a directory with enough space, this is where we will download the datasets and create our GRASS project.</span>
+<span id="cb39-83"><a href="#cb39-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-84"><a href="#cb39-84" aria-hidden="true" tabindex="-1"></a><span class="in">    os.chdir("path/to/data")</span></span>
+<span id="cb39-85"><a href="#cb39-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-86"><a href="#cb39-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-87"><a href="#cb39-87" aria-hidden="true" tabindex="-1"></a>Now create a GRASS project called *windfetch* with a Coordinate Reference System (CRS) used in North Carolina (<span class="co">[</span><span class="ot">EPSG 32119</span><span class="co">](https://spatialreference.org/ref/epsg/32119/)</span>).</span>
+<span id="cb39-88"><a href="#cb39-88" aria-hidden="true" tabindex="-1"></a>We create a new GRASS project for the tutorial. The EPSG code 32119 corresponds to NAD83 / North Carolina, a suitable projection for working in this region.</span>
+<span id="cb39-89"><a href="#cb39-89" aria-hidden="true" tabindex="-1"></a>Then we initialize the GRASS session in Jupyter, pointing it to the newly created project. This sets up the working environment.</span>
+<span id="cb39-90"><a href="#cb39-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-93"><a href="#cb39-93" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-94"><a href="#cb39-94" aria-hidden="true" tabindex="-1"></a>gs.create_project(<span class="st">"windfetch"</span>, epsg<span class="op">=</span><span class="st">"32119"</span>)</span>
+<span id="cb39-95"><a href="#cb39-95" aria-hidden="true" tabindex="-1"></a>gj.init(<span class="st">"windfetch"</span>)</span>
+<span id="cb39-96"><a href="#cb39-96" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-97"><a href="#cb39-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-98"><a href="#cb39-98" aria-hidden="true" tabindex="-1"></a><span class="fu">## Study area</span></span>
+<span id="cb39-99"><a href="#cb39-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-100"><a href="#cb39-100" aria-hidden="true" tabindex="-1"></a>We download a shapefile of US state boundaries from the <span class="co">[</span><span class="ot">U.S. Census Bureau TIGER/Line dataset</span><span class="co">]</span>((https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html)). This gives us a polygon map of all states, from which we can extract North Carolina.</span>
+<span id="cb39-101"><a href="#cb39-101" aria-hidden="true" tabindex="-1"></a>This data will help us define our study area. </span>
+<span id="cb39-102"><a href="#cb39-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-105"><a href="#cb39-105" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-106"><a href="#cb39-106" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> urllib.request</span>
+<span id="cb39-107"><a href="#cb39-107" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> zipfile</span>
+<span id="cb39-108"><a href="#cb39-108" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb39-109"><a href="#cb39-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-110"><a href="#cb39-110" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_state_20m.zip"</span></span>
+<span id="cb39-111"><a href="#cb39-111" aria-hidden="true" tabindex="-1"></a>states_filename, headers <span class="op">=</span> urllib.request.urlretrieve(url)</span>
+<span id="cb39-112"><a href="#cb39-112" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> zipfile.ZipFile(states_filename, <span class="st">"r"</span>) <span class="im">as</span> zip_ref:</span>
+<span id="cb39-113"><a href="#cb39-113" aria-hidden="true" tabindex="-1"></a>    zip_ref.extractall()</span>
+<span id="cb39-114"><a href="#cb39-114" aria-hidden="true" tabindex="-1"></a>os.remove(states_filename)</span>
+<span id="cb39-115"><a href="#cb39-115" aria-hidden="true" tabindex="-1"></a>states_filename <span class="op">=</span> Path(url).with_suffix(<span class="st">".shp"</span>).name</span>
+<span id="cb39-116"><a href="#cb39-116" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-117"><a href="#cb39-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-118"><a href="#cb39-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-119"><a href="#cb39-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-120"><a href="#cb39-120" aria-hidden="true" tabindex="-1"></a>We create a Tools object that lets us call GRASS tools as Python functions (e.g., tools.v_import instead of running v.import at the command line).</span>
+<span id="cb39-121"><a href="#cb39-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-124"><a href="#cb39-124" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-125"><a href="#cb39-125" aria-hidden="true" tabindex="-1"></a>tools <span class="op">=</span> Tools()</span>
+<span id="cb39-126"><a href="#cb39-126" aria-hidden="true" tabindex="-1"></a>tools.v_import(<span class="bu">input</span><span class="op">=</span>states_filename, output<span class="op">=</span><span class="st">"states"</span>)</span>
+<span id="cb39-127"><a href="#cb39-127" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-128"><a href="#cb39-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-129"><a href="#cb39-129" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title="Running GRASS 8.4?"}</span>
+<span id="cb39-130"><a href="#cb39-130" aria-hidden="true" tabindex="-1"></a>This tutorial uses new API available since GRASS 8.5. If you are running GRASS 8.4, you can use the <span class="co">[</span><span class="ot">shell-like tool calling API</span><span class="co">](https://grass.osgeo.org/grass-devel/manuals/python_intro.html#shell-like-tool-calling)</span> instead. So instead of <span class="in">`tools.v_import(input=states_filename, output="states")`</span>, you can use <span class="in">`gs.run_command("v.import", input=states_filename, output="states")`</span>.</span>
+<span id="cb39-131"><a href="#cb39-131" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb39-132"><a href="#cb39-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-133"><a href="#cb39-133" aria-hidden="true" tabindex="-1"></a>We query the attribute table of the states map and display it as a Pandas DataFrame. This lets us inspect column and state names.</span>
+<span id="cb39-134"><a href="#cb39-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-137"><a href="#cb39-137" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-138"><a href="#cb39-138" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb39-139"><a href="#cb39-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-140"><a href="#cb39-140" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(tools.v_db_select(<span class="bu">map</span><span class="op">=</span><span class="st">"states"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>)[<span class="st">"records"</span>])</span>
+<span id="cb39-141"><a href="#cb39-141" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-142"><a href="#cb39-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-143"><a href="#cb39-143" aria-hidden="true" tabindex="-1"></a><span class="al">![US states DataFrame](images/states.webp)</span></span>
+<span id="cb39-144"><a href="#cb39-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-145"><a href="#cb39-145" aria-hidden="true" tabindex="-1"></a>We extract North Carolina boundaries into a new vector map *NC* and display the North Carolina polygon in an interactive map widget, verifying that the state boundary was exported correctly.</span>
+<span id="cb39-146"><a href="#cb39-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-147"><a href="#cb39-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-150"><a href="#cb39-150" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-151"><a href="#cb39-151" aria-hidden="true" tabindex="-1"></a>tools.v_extract(<span class="bu">input</span><span class="op">=</span><span class="st">"states"</span>, output<span class="op">=</span><span class="st">"NC"</span>, where<span class="op">=</span><span class="st">"name == 'North Carolina'"</span>)</span>
+<span id="cb39-152"><a href="#cb39-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-153"><a href="#cb39-153" aria-hidden="true" tabindex="-1"></a>NC_map <span class="op">=</span> gj.InteractiveMap()</span>
+<span id="cb39-154"><a href="#cb39-154" aria-hidden="true" tabindex="-1"></a>NC_map.add_vector(<span class="st">"NC"</span>)</span>
+<span id="cb39-155"><a href="#cb39-155" aria-hidden="true" tabindex="-1"></a>NC_map.show()</span>
+<span id="cb39-156"><a href="#cb39-156" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-157"><a href="#cb39-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-158"><a href="#cb39-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-159"><a href="#cb39-159" aria-hidden="true" tabindex="-1"></a>Providing you have <span class="co">[</span><span class="ot">ipyleaflet</span><span class="co">](https://ipyleaflet.readthedocs.io/)</span> installed, you can interactively set the extent of the computational region, selecting area around Core Sound, part of the Outer Banks of North Carolina.</span>
+<span id="cb39-160"><a href="#cb39-160" aria-hidden="true" tabindex="-1"></a>You need to select sufficiently large area to allow for the correct fetch computation.</span>
+<span id="cb39-161"><a href="#cb39-161" aria-hidden="true" tabindex="-1"></a>You can also set the region directly:</span>
+<span id="cb39-162"><a href="#cb39-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-165"><a href="#cb39-165" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-166"><a href="#cb39-166" aria-hidden="true" tabindex="-1"></a>tools.g_region(n<span class="op">=</span><span class="dv">152610</span>, s<span class="op">=</span><span class="dv">94020</span>, w<span class="op">=</span><span class="dv">811200</span>, e<span class="op">=</span><span class="dv">876330</span>)</span>
+<span id="cb39-167"><a href="#cb39-167" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-168"><a href="#cb39-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-169"><a href="#cb39-169" aria-hidden="true" tabindex="-1"></a><span class="al">![Setting computational region interactively](images/region.webp)</span></span>
+<span id="cb39-170"><a href="#cb39-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-171"><a href="#cb39-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-172"><a href="#cb39-172" aria-hidden="true" tabindex="-1"></a><span class="fu">## Elevation data</span></span>
+<span id="cb39-173"><a href="#cb39-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-174"><a href="#cb39-174" aria-hidden="true" tabindex="-1"></a>One of the important inputs to r.windfetch is a binary raster representing land (1) and water (0).</span>
+<span id="cb39-175"><a href="#cb39-175" aria-hidden="true" tabindex="-1"></a>If the land polygons are not readily available, or they are not detailed enough,</span>
+<span id="cb39-176"><a href="#cb39-176" aria-hidden="true" tabindex="-1"></a>this raster can be easily derived from an elevation raster.</span>
+<span id="cb39-177"><a href="#cb39-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-178"><a href="#cb39-178" aria-hidden="true" tabindex="-1"></a>We install the <span class="co">[</span><span class="ot">r.in.usgs</span><span class="co">](https://grass.osgeo.org/grass-devel/manuals/addons/r.in.usgs.html)</span> addon, which provides convenient access to elevation data (USGS NED/3DEP) directly from within GRASS.</span>
+<span id="cb39-179"><a href="#cb39-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-182"><a href="#cb39-182" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-183"><a href="#cb39-183" aria-hidden="true" tabindex="-1"></a>tools.g_extension(extension<span class="op">=</span><span class="st">"r.in.usgs"</span>)</span>
+<span id="cb39-184"><a href="#cb39-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-185"><a href="#cb39-185" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-186"><a href="#cb39-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-187"><a href="#cb39-187" aria-hidden="true" tabindex="-1"></a>This addon will download elevation data based on the extent of the current computational region. The resolution of the imported dataset is set automatically based on the type of elevation product.</span>
+<span id="cb39-188"><a href="#cb39-188" aria-hidden="true" tabindex="-1"></a>In our case we will use the 1 arc-second NED product corresponding to approximately 30 meters.</span>
+<span id="cb39-189"><a href="#cb39-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-190"><a href="#cb39-190" aria-hidden="true" tabindex="-1"></a>We run r.in.usgs with the -i flag to list available elevation datasets (here, the NED product). This lets us see what tiles are available for our region (the output may be different in the future as the data is updated by USGS).</span>
+<span id="cb39-191"><a href="#cb39-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-194"><a href="#cb39-194" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-195"><a href="#cb39-195" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_in_usgs(flags<span class="op">=</span><span class="st">"i"</span>, product<span class="op">=</span><span class="st">"ned"</span>, ned_dataset<span class="op">=</span><span class="st">"ned1sec"</span>).text)</span>
+<span id="cb39-196"><a href="#cb39-196" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-197"><a href="#cb39-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-198"><a href="#cb39-198" aria-hidden="true" tabindex="-1"></a><span class="in">```text</span></span>
+<span id="cb39-199"><a href="#cb39-199" aria-hidden="true" tabindex="-1"></a><span class="in">USGS file(s) to download:</span></span>
+<span id="cb39-200"><a href="#cb39-200" aria-hidden="true" tabindex="-1"></a><span class="in">-------------------------</span></span>
+<span id="cb39-201"><a href="#cb39-201" aria-hidden="true" tabindex="-1"></a><span class="in">Total download size:    58.40 MB</span></span>
+<span id="cb39-202"><a href="#cb39-202" aria-hidden="true" tabindex="-1"></a><span class="in">Tile count: 4</span></span>
+<span id="cb39-203"><a href="#cb39-203" aria-hidden="true" tabindex="-1"></a><span class="in">USGS SRS:   wgs84</span></span>
+<span id="cb39-204"><a href="#cb39-204" aria-hidden="true" tabindex="-1"></a><span class="in">USGS tile titles:</span></span>
+<span id="cb39-205"><a href="#cb39-205" aria-hidden="true" tabindex="-1"></a><span class="in">USGS 1 Arc Second n35w077 20250507</span></span>
+<span id="cb39-206"><a href="#cb39-206" aria-hidden="true" tabindex="-1"></a><span class="in">USGS 1 Arc Second n36w077 20250507</span></span>
+<span id="cb39-207"><a href="#cb39-207" aria-hidden="true" tabindex="-1"></a><span class="in">USGS 1 arc-second n35w077 1 x 1 degree</span></span>
+<span id="cb39-208"><a href="#cb39-208" aria-hidden="true" tabindex="-1"></a><span class="in">USGS 1 arc-second n36w077 1 x 1 degree</span></span>
+<span id="cb39-209"><a href="#cb39-209" aria-hidden="true" tabindex="-1"></a><span class="in">-------------------------</span></span>
+<span id="cb39-210"><a href="#cb39-210" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-211"><a href="#cb39-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-212"><a href="#cb39-212" aria-hidden="true" tabindex="-1"></a>We remove the flag and rerun r.in.usgs to actually download and import the data. We filter the data to only include the tiles with "degree" in the title name.</span>
+<span id="cb39-213"><a href="#cb39-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-216"><a href="#cb39-216" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-217"><a href="#cb39-217" aria-hidden="true" tabindex="-1"></a>tools.r_in_usgs(</span>
+<span id="cb39-218"><a href="#cb39-218" aria-hidden="true" tabindex="-1"></a>    product<span class="op">=</span><span class="st">"ned"</span>,</span>
+<span id="cb39-219"><a href="#cb39-219" aria-hidden="true" tabindex="-1"></a>    output_name<span class="op">=</span><span class="st">"ned"</span>,</span>
+<span id="cb39-220"><a href="#cb39-220" aria-hidden="true" tabindex="-1"></a>    ned_dataset<span class="op">=</span><span class="st">"ned1sec"</span>,</span>
+<span id="cb39-221"><a href="#cb39-221" aria-hidden="true" tabindex="-1"></a>    title_filter<span class="op">=</span><span class="st">"degree"</span>,</span>
+<span id="cb39-222"><a href="#cb39-222" aria-hidden="true" tabindex="-1"></a>    nprocs<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb39-223"><a href="#cb39-223" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb39-224"><a href="#cb39-224" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-225"><a href="#cb39-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-226"><a href="#cb39-226" aria-hidden="true" tabindex="-1"></a>Let's look at the data we just downloaded. We will display only elevation values larger than 0:</span>
+<span id="cb39-227"><a href="#cb39-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-230"><a href="#cb39-230" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-231"><a href="#cb39-231" aria-hidden="true" tabindex="-1"></a>ned_map <span class="op">=</span> gj.Map()</span>
+<span id="cb39-232"><a href="#cb39-232" aria-hidden="true" tabindex="-1"></a>ned_map.d_background(color<span class="op">=</span><span class="st">"aqua"</span>)</span>
+<span id="cb39-233"><a href="#cb39-233" aria-hidden="true" tabindex="-1"></a>ned_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"ned"</span>, values<span class="op">=</span><span class="st">"0.0001-100"</span>)</span>
+<span id="cb39-234"><a href="#cb39-234" aria-hidden="true" tabindex="-1"></a>ned_map.show()</span>
+<span id="cb39-235"><a href="#cb39-235" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-236"><a href="#cb39-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-237"><a href="#cb39-237" aria-hidden="true" tabindex="-1"></a><span class="al">![Elevation data](images/ned.webp)</span></span>
+<span id="cb39-238"><a href="#cb39-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-239"><a href="#cb39-239" aria-hidden="true" tabindex="-1"></a>Set computational region to match the extent and resolution of the NED dataset.</span>
+<span id="cb39-240"><a href="#cb39-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-243"><a href="#cb39-243" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-244"><a href="#cb39-244" aria-hidden="true" tabindex="-1"></a>tools.g_region(raster<span class="op">=</span><span class="st">"ned"</span>)</span>
+<span id="cb39-245"><a href="#cb39-245" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-246"><a href="#cb39-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-247"><a href="#cb39-247" aria-hidden="true" tabindex="-1"></a>We derive the land/water raster using raster algebra with <span class="co">[</span><span class="ot">r.mapcalc</span><span class="co">](https://grass.osgeo.org/grass-devel/manuals/r.mapcalc.html)</span>.</span>
+<span id="cb39-248"><a href="#cb39-248" aria-hidden="true" tabindex="-1"></a>Values above sea level are set to 1 (land), while sea level and below are 0 (water). This prepares the key input raster for r.windfetch.</span>
+<span id="cb39-249"><a href="#cb39-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-252"><a href="#cb39-252" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-253"><a href="#cb39-253" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"land = if(ned &gt; 0, 1, 0)"</span>)</span>
+<span id="cb39-254"><a href="#cb39-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-255"><a href="#cb39-255" aria-hidden="true" tabindex="-1"></a>ned_map <span class="op">=</span> gj.Map()</span>
+<span id="cb39-256"><a href="#cb39-256" aria-hidden="true" tabindex="-1"></a>ned_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"land"</span>)</span>
+<span id="cb39-257"><a href="#cb39-257" aria-hidden="true" tabindex="-1"></a>ned_map.show()</span>
+<span id="cb39-258"><a href="#cb39-258" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-259"><a href="#cb39-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-260"><a href="#cb39-260" aria-hidden="true" tabindex="-1"></a><span class="al">![Land/water raster](images/land.webp)</span></span>
+<span id="cb39-261"><a href="#cb39-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-262"><a href="#cb39-262" aria-hidden="true" tabindex="-1"></a><span class="fu">## Wind data</span></span>
+<span id="cb39-263"><a href="#cb39-263" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-264"><a href="#cb39-264" aria-hidden="true" tabindex="-1"></a>Wind roses show the frequency of winds from different directions, and at different speeds, over a given period of time (<span class="co">[</span><span class="ot">NC Air Quality Portal</span><span class="co">](https://airquality.climate.ncsu.edu/wind/)</span>).</span>
+<span id="cb39-265"><a href="#cb39-265" aria-hidden="true" tabindex="-1"></a>We will use this information to compute wind fetch weighted by the percentage of wind observed from the different directions.</span>
+<span id="cb39-266"><a href="#cb39-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-267"><a href="#cb39-267" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-268"><a href="#cb39-268" aria-hidden="true" tabindex="-1"></a>We will use wind rose dataset (CSV) for station KMRH (Beaufort, NC) that is near our study area.</span>
+<span id="cb39-269"><a href="#cb39-269" aria-hidden="true" tabindex="-1"></a>The file can be downloaded <span class="co">[</span><span class="ot">here</span><span class="co">](windrose_KMRH_2001-07-05_2025-09-01.csv)</span> or accessed from <span class="co">[</span><span class="ot">NC Air Quality Portal</span><span class="co">](https://airquality.climate.ncsu.edu/wind/)</span>.</span>
+<span id="cb39-270"><a href="#cb39-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-271"><a href="#cb39-271" aria-hidden="true" tabindex="-1"></a><span class="al">![Wind rose for Beaufort, NC](images/windrose_KMRH_2001-07-05_2025-09-01.webp)</span></span>
+<span id="cb39-272"><a href="#cb39-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-273"><a href="#cb39-273" aria-hidden="true" tabindex="-1"></a>First, read the CSV file into a Pandas DataFrame.</span>
+<span id="cb39-276"><a href="#cb39-276" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-277"><a href="#cb39-277" aria-hidden="true" tabindex="-1"></a>wind_df <span class="op">=</span> pd.read_csv(<span class="st">"windrose_KMRH_2001-07-05_2025-09-01.csv"</span>)</span>
+<span id="cb39-278"><a href="#cb39-278" aria-hidden="true" tabindex="-1"></a>wind_df</span>
+<span id="cb39-279"><a href="#cb39-279" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-280"><a href="#cb39-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-281"><a href="#cb39-281" aria-hidden="true" tabindex="-1"></a>We calculate the total frequency of winds per direction sector by summing across the available columns. This gives us the relative importance of each direction.</span>
+<span id="cb39-282"><a href="#cb39-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-285"><a href="#cb39-285" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-286"><a href="#cb39-286" aria-hidden="true" tabindex="-1"></a>wind_df[<span class="st">"total"</span>] <span class="op">=</span> wind_df.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>, numeric_only<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-287"><a href="#cb39-287" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-288"><a href="#cb39-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-289"><a href="#cb39-289" aria-hidden="true" tabindex="-1"></a>We add a directions column, assigning compass angles to each wind sector. Here, each sector is 22.5° apart (16 sectors total). We round the angles to integers to match the integer directions used by r.windfetch.</span>
+<span id="cb39-290"><a href="#cb39-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-291"><a href="#cb39-291" aria-hidden="true" tabindex="-1"></a>We also convert wind directions from the meteorological “from” convention to the “to” convention by adding 180°, so they align with fetch measurements pointing toward open water.</span>
+<span id="cb39-292"><a href="#cb39-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-295"><a href="#cb39-295" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-296"><a href="#cb39-296" aria-hidden="true" tabindex="-1"></a>wind_df[<span class="st">"directions"</span>] <span class="op">=</span> [<span class="bu">round</span>(i <span class="op">*</span> <span class="fl">22.5</span>) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(wind_df))]</span>
+<span id="cb39-297"><a href="#cb39-297" aria-hidden="true" tabindex="-1"></a>wind_df[<span class="st">"directions"</span>] <span class="op">=</span> (wind_df[<span class="st">"directions"</span>] <span class="op">+</span> <span class="dv">180</span>) <span class="op">%</span> <span class="dv">360</span></span>
+<span id="cb39-298"><a href="#cb39-298" aria-hidden="true" tabindex="-1"></a>wind_df</span>
+<span id="cb39-299"><a href="#cb39-299" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-300"><a href="#cb39-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-301"><a href="#cb39-301" aria-hidden="true" tabindex="-1"></a><span class="al">![Wind DataFrame](images/wind_df.webp)</span></span>
+<span id="cb39-302"><a href="#cb39-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-303"><a href="#cb39-303" aria-hidden="true" tabindex="-1"></a><span class="fu"># Wind fetch analysis for a single point</span></span>
+<span id="cb39-304"><a href="#cb39-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-305"><a href="#cb39-305" aria-hidden="true" tabindex="-1"></a>We install r.windfetch addon, which computes wind fetch distances over water for given input points and directions.</span>
+<span id="cb39-306"><a href="#cb39-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-309"><a href="#cb39-309" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-310"><a href="#cb39-310" aria-hidden="true" tabindex="-1"></a>tools.g_extension(extension<span class="op">=</span><span class="st">"r.windfetch"</span>)</span>
+<span id="cb39-311"><a href="#cb39-311" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-312"><a href="#cb39-312" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-313"><a href="#cb39-313" aria-hidden="true" tabindex="-1"></a>We will select a point interactively and export to a vector map *point*. Make sure the point is located somewhere along the coast on water, not land.</span>
+<span id="cb39-314"><a href="#cb39-314" aria-hidden="true" tabindex="-1"></a>This point will serve as a location to compute wind fetch in different directions.</span>
+<span id="cb39-315"><a href="#cb39-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-318"><a href="#cb39-318" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-319"><a href="#cb39-319" aria-hidden="true" tabindex="-1"></a>ned_map <span class="op">=</span> gj.InteractiveMap()</span>
+<span id="cb39-320"><a href="#cb39-320" aria-hidden="true" tabindex="-1"></a>ned_map.add_raster(<span class="st">"land"</span>)</span>
+<span id="cb39-321"><a href="#cb39-321" aria-hidden="true" tabindex="-1"></a>ned_map.show()</span>
+<span id="cb39-322"><a href="#cb39-322" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-323"><a href="#cb39-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-324"><a href="#cb39-324" aria-hidden="true" tabindex="-1"></a><span class="al">![Interactive point selection](images/point.webp)</span></span>
+<span id="cb39-325"><a href="#cb39-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-326"><a href="#cb39-326" aria-hidden="true" tabindex="-1"></a>Alternatively create a vector point with:</span>
+<span id="cb39-327"><a href="#cb39-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-330"><a href="#cb39-330" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-331"><a href="#cb39-331" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
+<span id="cb39-332"><a href="#cb39-332" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-333"><a href="#cb39-333" aria-hidden="true" tabindex="-1"></a>tools.v_in_ascii(<span class="bu">input</span><span class="op">=</span>io.StringIO(<span class="st">"838658,112214"</span>), output<span class="op">=</span><span class="st">"point"</span>, separator<span class="op">=</span><span class="st">"comma"</span>)</span>
+<span id="cb39-334"><a href="#cb39-334" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-335"><a href="#cb39-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-336"><a href="#cb39-336" aria-hidden="true" tabindex="-1"></a>The _effective fetch_ is computed by averaging multiple radials spread around the main wind direction. In r.windfetch, this is controlled by two parameters:</span>
+<span id="cb39-337"><a href="#cb39-337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-338"><a href="#cb39-338" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**minor_directions** – total number of radials used to compute effective fetch (including the central/main radial).</span>
+<span id="cb39-339"><a href="#cb39-339" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**minor_step** – angular spacing between adjacent radials (in degrees).</span>
+<span id="cb39-340"><a href="#cb39-340" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-341"><a href="#cb39-341" aria-hidden="true" tabindex="-1"></a>Common configurations (based on U.S. Army Corps of Engineers Shore Protection Manual):</span>
+<span id="cb39-342"><a href="#cb39-342" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-343"><a href="#cb39-343" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method            <span class="pp">|</span> minor_directions <span class="pp">|</span> minor_step <span class="pp">|</span> arc width <span class="pp">|</span></span>
+<span id="cb39-344"><a href="#cb39-344" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------------|-----------------:|-----------:|----------:|</span></span>
+<span id="cb39-345"><a href="#cb39-345" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **SPM**           <span class="pp">|</span> 9                <span class="pp">|</span> 3°         <span class="pp">|</span> 24°       <span class="pp">|</span></span>
+<span id="cb39-346"><a href="#cb39-346" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **SPM-restricted**<span class="pp">|</span> 5                <span class="pp">|</span> 3°         <span class="pp">|</span> 12°       <span class="pp">|</span></span>
+<span id="cb39-347"><a href="#cb39-347" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Single radial** <span class="pp">|</span> 1                <span class="pp">|</span> –          <span class="pp">|</span> 0°        <span class="pp">|</span></span>
+<span id="cb39-348"><a href="#cb39-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-349"><a href="#cb39-349" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-350"><a href="#cb39-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-351"><a href="#cb39-351" aria-hidden="true" tabindex="-1"></a>The broader arc (SPM) generally better reflects real-world spreading of wave energy, while the narrower arc (SPM-restricted) can be more appropriate in environments with long, narrow fetches such as estuaries or channels.</span>
+<span id="cb39-352"><a href="#cb39-352" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-353"><a href="#cb39-353" aria-hidden="true" tabindex="-1"></a><span class="al">![Wind fetch methods (Rohweder et al. 2012)](images/methods.webp)</span></span>
+<span id="cb39-354"><a href="#cb39-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-355"><a href="#cb39-355" aria-hidden="true" tabindex="-1"></a>We run r.windfetch from the selected point with the SPM configuration. The output is returned as JSON, which we capture in a Python dictionary.</span>
+<span id="cb39-356"><a href="#cb39-356" aria-hidden="true" tabindex="-1"></a>Flag *c* tells r.windfetch to use compass directions (clockwise from North).</span>
+<span id="cb39-357"><a href="#cb39-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-360"><a href="#cb39-360" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-361"><a href="#cb39-361" aria-hidden="true" tabindex="-1"></a>point_fetch <span class="op">=</span> tools.r_windfetch(</span>
+<span id="cb39-362"><a href="#cb39-362" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"land"</span>,</span>
+<span id="cb39-363"><a href="#cb39-363" aria-hidden="true" tabindex="-1"></a>    points<span class="op">=</span><span class="st">"point"</span>,</span>
+<span id="cb39-364"><a href="#cb39-364" aria-hidden="true" tabindex="-1"></a>    <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>,</span>
+<span id="cb39-365"><a href="#cb39-365" aria-hidden="true" tabindex="-1"></a>    step<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb39-366"><a href="#cb39-366" aria-hidden="true" tabindex="-1"></a>    minor_directions<span class="op">=</span><span class="dv">9</span>,</span>
+<span id="cb39-367"><a href="#cb39-367" aria-hidden="true" tabindex="-1"></a>    minor_step<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb39-368"><a href="#cb39-368" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="st">"c"</span>,</span>
+<span id="cb39-369"><a href="#cb39-369" aria-hidden="true" tabindex="-1"></a>)[<span class="dv">0</span>]</span>
+<span id="cb39-370"><a href="#cb39-370" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-371"><a href="#cb39-371" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-372"><a href="#cb39-372" aria-hidden="true" tabindex="-1"></a>We convert the r.windfetch output into a Pandas DataFrame for easier inspection. Each row corresponds to a direction and its computed fetch length (in meters).</span>
+<span id="cb39-373"><a href="#cb39-373" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-376"><a href="#cb39-376" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-377"><a href="#cb39-377" aria-hidden="true" tabindex="-1"></a>fetch_df <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb39-378"><a href="#cb39-378" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"directions"</span>: point_fetch[<span class="st">"directions"</span>], <span class="st">"fetch"</span>: point_fetch[<span class="st">"fetch"</span>]}</span>
+<span id="cb39-379"><a href="#cb39-379" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb39-380"><a href="#cb39-380" aria-hidden="true" tabindex="-1"></a>fetch_df</span>
+<span id="cb39-381"><a href="#cb39-381" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-382"><a href="#cb39-382" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-383"><a href="#cb39-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-384"><a href="#cb39-384" aria-hidden="true" tabindex="-1"></a>We create a polar plot (rose diagram) of fetch lengths. This visualization shows, for the selected point, how far wind can blow unobstructed in different directions. Image below shows a rose diagram for the SPM  and SPM-restricted configurations.</span>
+<span id="cb39-385"><a href="#cb39-385" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-388"><a href="#cb39-388" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-389"><a href="#cb39-389" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb39-390"><a href="#cb39-390" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb39-391"><a href="#cb39-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-392"><a href="#cb39-392" aria-hidden="true" tabindex="-1"></a>directions <span class="op">=</span> np.deg2rad(point_fetch[<span class="st">"directions"</span>])</span>
+<span id="cb39-393"><a href="#cb39-393" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plt.subplot(<span class="dv">111</span>, polar<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-394"><a href="#cb39-394" aria-hidden="true" tabindex="-1"></a>ax.plot(directions, point_fetch[<span class="st">"fetch"</span>], marker<span class="op">=</span><span class="st">"o"</span>, linestyle<span class="op">=</span><span class="st">"-"</span>)</span>
+<span id="cb39-395"><a href="#cb39-395" aria-hidden="true" tabindex="-1"></a>ax.fill(directions, point_fetch[<span class="st">"fetch"</span>], alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb39-396"><a href="#cb39-396" aria-hidden="true" tabindex="-1"></a>ax.set_theta_zero_location(<span class="st">"E"</span>)</span>
+<span id="cb39-397"><a href="#cb39-397" aria-hidden="true" tabindex="-1"></a>ax.set_theta_direction(<span class="dv">1</span>)</span>
+<span id="cb39-398"><a href="#cb39-398" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Wind fetch"</span>, va<span class="op">=</span><span class="st">"bottom"</span>)</span>
+<span id="cb39-399"><a href="#cb39-399" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb39-400"><a href="#cb39-400" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-401"><a href="#cb39-401" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-402"><a href="#cb39-402" aria-hidden="true" tabindex="-1"></a>::: {layout-ncol=2}</span>
+<span id="cb39-403"><a href="#cb39-403" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-404"><a href="#cb39-404" aria-hidden="true" tabindex="-1"></a><span class="al">![SPM](images/plot_spm.webp)</span></span>
+<span id="cb39-405"><a href="#cb39-405" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-406"><a href="#cb39-406" aria-hidden="true" tabindex="-1"></a><span class="al">![SPM-restricted](images/plot_restricted.webp)</span></span>
+<span id="cb39-407"><a href="#cb39-407" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb39-408"><a href="#cb39-408" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-409"><a href="#cb39-409" aria-hidden="true" tabindex="-1"></a>We join the wind rose data with the fetch results by matching directions. This allows us to combine how often wind blows from a direction with how far it can travel.</span>
+<span id="cb39-410"><a href="#cb39-410" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-413"><a href="#cb39-413" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-414"><a href="#cb39-414" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> pd.merge(wind_df, fetch_df, on<span class="op">=</span><span class="st">"directions"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb39-415"><a href="#cb39-415" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-416"><a href="#cb39-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-417"><a href="#cb39-417" aria-hidden="true" tabindex="-1"></a>We compute weighted fetch: multiplying fetch length by wind frequency (percentage). This creates an effective measure of wave-generating potential.</span>
+<span id="cb39-418"><a href="#cb39-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-421"><a href="#cb39-421" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-422"><a href="#cb39-422" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">"weighted_fetch"</span>] <span class="op">=</span> merged_df[<span class="st">"fetch"</span>] <span class="op">*</span> merged_df[<span class="st">"total"</span>] <span class="op">/</span> <span class="dv">100</span></span>
+<span id="cb39-423"><a href="#cb39-423" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-424"><a href="#cb39-424" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-425"><a href="#cb39-425" aria-hidden="true" tabindex="-1"></a>We calculate the overall effective fetch for the point by summing across all wind directions. This produces a single index summarizing wave exposure, integrating both shoreline geometry and real wind climate.</span>
+<span id="cb39-426"><a href="#cb39-426" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-429"><a href="#cb39-429" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-430"><a href="#cb39-430" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">"weighted_fetch"</span>].<span class="bu">sum</span>()</span>
+<span id="cb39-431"><a href="#cb39-431" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-432"><a href="#cb39-432" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-433"><a href="#cb39-433" aria-hidden="true" tabindex="-1"></a>At this point, the tutorial has shown a full workflow: preparing data, running r.windfetch, and combining with wind rose data.</span>
+<span id="cb39-434"><a href="#cb39-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-435"><a href="#cb39-435" aria-hidden="true" tabindex="-1"></a><span class="fu"># Wind fetch for points along a coastline</span></span>
+<span id="cb39-436"><a href="#cb39-436" aria-hidden="true" tabindex="-1"></a>Now we will create vector point map with points along a coastline.</span>
+<span id="cb39-437"><a href="#cb39-437" aria-hidden="true" tabindex="-1"></a>We will select only part of the coastline, focusing on a section of Carteret county, North Carolina, within our study area.</span>
+<span id="cb39-438"><a href="#cb39-438" aria-hidden="true" tabindex="-1"></a>Specifically we will select a single census tract.</span>
+<span id="cb39-439"><a href="#cb39-439" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-440"><a href="#cb39-440" aria-hidden="true" tabindex="-1"></a>Download NC tract boundaries:</span>
+<span id="cb39-441"><a href="#cb39-441" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-444"><a href="#cb39-444" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-445"><a href="#cb39-445" aria-hidden="true" tabindex="-1"></a>url <span class="op">=</span> <span class="st">"https://www2.census.gov/geo/tiger/TIGER2024/TRACT/tl_2024_37_tract.zip"</span></span>
+<span id="cb39-446"><a href="#cb39-446" aria-hidden="true" tabindex="-1"></a>tracts_filename, headers <span class="op">=</span> urllib.request.urlretrieve(url)</span>
+<span id="cb39-447"><a href="#cb39-447" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> zipfile.ZipFile(tracts_filename, <span class="st">"r"</span>) <span class="im">as</span> zip_ref:</span>
+<span id="cb39-448"><a href="#cb39-448" aria-hidden="true" tabindex="-1"></a>    zip_ref.extractall()</span>
+<span id="cb39-449"><a href="#cb39-449" aria-hidden="true" tabindex="-1"></a>os.remove(tracts_filename)</span>
+<span id="cb39-450"><a href="#cb39-450" aria-hidden="true" tabindex="-1"></a>tracts_filename <span class="op">=</span> Path(url).with_suffix(<span class="st">".shp"</span>).name</span>
+<span id="cb39-451"><a href="#cb39-451" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-452"><a href="#cb39-452" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-453"><a href="#cb39-453" aria-hidden="true" tabindex="-1"></a>We will import only tracts that fall in our study area (i.e. within our current computational region extent).</span>
+<span id="cb39-454"><a href="#cb39-454" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-457"><a href="#cb39-457" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-458"><a href="#cb39-458" aria-hidden="true" tabindex="-1"></a>tools.v_import(<span class="bu">input</span><span class="op">=</span>tracts_filename, output<span class="op">=</span><span class="st">"tracts"</span>, extent<span class="op">=</span><span class="st">"region"</span>)</span>
+<span id="cb39-459"><a href="#cb39-459" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-460"><a href="#cb39-460" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-461"><a href="#cb39-461" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-462"><a href="#cb39-462" aria-hidden="true" tabindex="-1"></a>Display the tracts, select one and and find its GEOID:</span>
+<span id="cb39-465"><a href="#cb39-465" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-466"><a href="#cb39-466" aria-hidden="true" tabindex="-1"></a>point_map <span class="op">=</span> gj.InteractiveMap()</span>
+<span id="cb39-467"><a href="#cb39-467" aria-hidden="true" tabindex="-1"></a>point_map.add_vector(<span class="st">"tracts"</span>)</span>
+<span id="cb39-468"><a href="#cb39-468" aria-hidden="true" tabindex="-1"></a>point_map.show()</span>
+<span id="cb39-469"><a href="#cb39-469" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-470"><a href="#cb39-470" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-471"><a href="#cb39-471" aria-hidden="true" tabindex="-1"></a><span class="al">![Query map of tracts](images/tract.webp)</span></span>
+<span id="cb39-472"><a href="#cb39-472" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-473"><a href="#cb39-473" aria-hidden="true" tabindex="-1"></a>Extract the tract:</span>
+<span id="cb39-474"><a href="#cb39-474" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-477"><a href="#cb39-477" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-478"><a href="#cb39-478" aria-hidden="true" tabindex="-1"></a>tools.v_extract(<span class="bu">input</span><span class="op">=</span><span class="st">"tracts"</span>, output<span class="op">=</span><span class="st">"tract"</span>, where<span class="op">=</span><span class="st">"GEOID = 37031970103"</span>)</span>
+<span id="cb39-479"><a href="#cb39-479" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-480"><a href="#cb39-480" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-481"><a href="#cb39-481" aria-hidden="true" tabindex="-1"></a>We will create a vector map of points along the coastline by first growing a single-cell buffer along the coast. This ensures the points fall on water. The buffer cells are then vectorized into points. The <span class="co">[</span><span class="ot">r.buffer</span><span class="co">](https://grass.osgeo.org/grass-devel/manuals/r.buffer.html)</span> tool creates cells with value 1 (original land) and value 2 (buffer). We set cells with value 1 to null, leaving only the coastal points.</span>
+<span id="cb39-482"><a href="#cb39-482" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-483"><a href="#cb39-483" aria-hidden="true" tabindex="-1"></a>We use a <span class="co">[</span><span class="ot">RegionManager</span><span class="co">](https://grass.osgeo.org/grass-devel/manuals/libpython/grass.script.html#grass.script.RegionManager)</span> context manager to temporarily set the computational region</span>
+<span id="cb39-484"><a href="#cb39-484" aria-hidden="true" tabindex="-1"></a>extent to the tract vector and aligning the raster grid to the land map.</span>
+<span id="cb39-485"><a href="#cb39-485" aria-hidden="true" tabindex="-1"></a>This ensures that the buffer is computed only within the tract extent but the</span>
+<span id="cb39-486"><a href="#cb39-486" aria-hidden="true" tabindex="-1"></a>fetch analysis will be using land data on the full study area.</span>
+<span id="cb39-487"><a href="#cb39-487" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-490"><a href="#cb39-490" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-491"><a href="#cb39-491" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> gs.RegionManager(vector<span class="op">=</span><span class="st">"tract"</span>, align<span class="op">=</span><span class="st">"land"</span>):</span>
+<span id="cb39-492"><a href="#cb39-492" aria-hidden="true" tabindex="-1"></a>    tools.r_buffer(flags<span class="op">=</span><span class="st">"z"</span>, <span class="bu">input</span><span class="op">=</span><span class="st">"land"</span>, output<span class="op">=</span><span class="st">"buffer"</span>, distances<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb39-493"><a href="#cb39-493" aria-hidden="true" tabindex="-1"></a>    tools.r_null(<span class="bu">map</span><span class="op">=</span><span class="st">"buffer"</span>, setnull<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb39-494"><a href="#cb39-494" aria-hidden="true" tabindex="-1"></a>    tools.r_to_vect(flags<span class="op">=</span><span class="st">"t"</span>, <span class="bu">input</span><span class="op">=</span><span class="st">"buffer"</span>, output<span class="op">=</span><span class="st">"points"</span>, <span class="bu">type</span><span class="op">=</span><span class="st">"point"</span>)</span>
+<span id="cb39-495"><a href="#cb39-495" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-496"><a href="#cb39-496" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-497"><a href="#cb39-497" aria-hidden="true" tabindex="-1"></a>Next, we compute the wind fetch for each point in the vector map using the SPM setting.</span>
+<span id="cb39-498"><a href="#cb39-498" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-501"><a href="#cb39-501" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-502"><a href="#cb39-502" aria-hidden="true" tabindex="-1"></a>points_fetch <span class="op">=</span> tools.r_windfetch(</span>
+<span id="cb39-503"><a href="#cb39-503" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"land"</span>,</span>
+<span id="cb39-504"><a href="#cb39-504" aria-hidden="true" tabindex="-1"></a>    points<span class="op">=</span><span class="st">"points"</span>,</span>
+<span id="cb39-505"><a href="#cb39-505" aria-hidden="true" tabindex="-1"></a>    <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>,</span>
+<span id="cb39-506"><a href="#cb39-506" aria-hidden="true" tabindex="-1"></a>    step<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb39-507"><a href="#cb39-507" aria-hidden="true" tabindex="-1"></a>    minor_directions<span class="op">=</span><span class="dv">9</span>,</span>
+<span id="cb39-508"><a href="#cb39-508" aria-hidden="true" tabindex="-1"></a>    minor_step<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb39-509"><a href="#cb39-509" aria-hidden="true" tabindex="-1"></a>    flags<span class="op">=</span><span class="st">"c"</span>,</span>
+<span id="cb39-510"><a href="#cb39-510" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb39-511"><a href="#cb39-511" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-512"><a href="#cb39-512" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-513"><a href="#cb39-513" aria-hidden="true" tabindex="-1"></a>Similarly to the previous example, we will load fetch data into a Pandas DataFrame.</span>
+<span id="cb39-514"><a href="#cb39-514" aria-hidden="true" tabindex="-1"></a>Since we are getting a list (fetch data for each point), we will use the <span class="co">[</span><span class="ot">explode</span><span class="co">](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.explode.html)</span> function to transform the list into a DataFrame.</span>
+<span id="cb39-515"><a href="#cb39-515" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-518"><a href="#cb39-518" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-519"><a href="#cb39-519" aria-hidden="true" tabindex="-1"></a>fetch_df <span class="op">=</span> pd.DataFrame(points_fetch)</span>
+<span id="cb39-520"><a href="#cb39-520" aria-hidden="true" tabindex="-1"></a>fetch_df <span class="op">=</span> fetch_df.explode([<span class="st">"directions"</span>, <span class="st">"fetch"</span>], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-521"><a href="#cb39-521" aria-hidden="true" tabindex="-1"></a>fetch_df <span class="op">=</span> fetch_df.rename(columns<span class="op">=</span>{<span class="st">"directions"</span>: <span class="st">"directions"</span>})</span>
+<span id="cb39-522"><a href="#cb39-522" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-523"><a href="#cb39-523" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-524"><a href="#cb39-524" aria-hidden="true" tabindex="-1"></a>We will join the wind rose data with the fetch results by matching directions.</span>
+<span id="cb39-525"><a href="#cb39-525" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-528"><a href="#cb39-528" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-529"><a href="#cb39-529" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> pd.merge(wind_df, fetch_df, on<span class="op">=</span><span class="st">"directions"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb39-530"><a href="#cb39-530" aria-hidden="true" tabindex="-1"></a>merged_df[<span class="st">"weighted_fetch"</span>] <span class="op">=</span> merged_df[<span class="st">"fetch"</span>] <span class="op">*</span> merged_df[<span class="st">"total"</span>] <span class="op">/</span> <span class="dv">100</span></span>
+<span id="cb39-531"><a href="#cb39-531" aria-hidden="true" tabindex="-1"></a>merged_df</span>
+<span id="cb39-532"><a href="#cb39-532" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-533"><a href="#cb39-533" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-534"><a href="#cb39-534" aria-hidden="true" tabindex="-1"></a>We can now calculate the overall effective fetch for each point by summing across all wind directions.</span>
+<span id="cb39-535"><a href="#cb39-535" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-538"><a href="#cb39-538" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-539"><a href="#cb39-539" aria-hidden="true" tabindex="-1"></a>merged_df <span class="op">=</span> merged_df.groupby([<span class="st">"x"</span>, <span class="st">"y"</span>], as_index<span class="op">=</span><span class="va">False</span>)[<span class="st">"weighted_fetch"</span>].<span class="bu">sum</span>()</span>
+<span id="cb39-540"><a href="#cb39-540" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-541"><a href="#cb39-541" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-542"><a href="#cb39-542" aria-hidden="true" tabindex="-1"></a><span class="fu">## Visualization</span></span>
+<span id="cb39-543"><a href="#cb39-543" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-544"><a href="#cb39-544" aria-hidden="true" tabindex="-1"></a>Final step is visualizing the data in a web map.</span>
+<span id="cb39-545"><a href="#cb39-545" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-546"><a href="#cb39-546" aria-hidden="true" tabindex="-1"></a>We will convert the DataFrame to GeoJSON in EPSG:4326. First, we will create a CSV text file from the DataFrame and convert it into a GRASS vector map. Then, we will convert the vector map to GeoJSON, ensuring the CRS is set to EPSG:4326 (ensured by specifying the RFC7946 standard).</span>
+<span id="cb39-547"><a href="#cb39-547" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-550"><a href="#cb39-550" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-551"><a href="#cb39-551" aria-hidden="true" tabindex="-1"></a>merged_df.to_csv(<span class="st">"results.txt"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb39-552"><a href="#cb39-552" aria-hidden="true" tabindex="-1"></a>tools.v_in_ascii(</span>
+<span id="cb39-553"><a href="#cb39-553" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"results.txt"</span>,</span>
+<span id="cb39-554"><a href="#cb39-554" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"results"</span>,</span>
+<span id="cb39-555"><a href="#cb39-555" aria-hidden="true" tabindex="-1"></a>    separator<span class="op">=</span><span class="st">"comma"</span>,</span>
+<span id="cb39-556"><a href="#cb39-556" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="st">"x double, y double, fetch double"</span>,</span>
+<span id="cb39-557"><a href="#cb39-557" aria-hidden="true" tabindex="-1"></a>    skip<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb39-558"><a href="#cb39-558" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb39-559"><a href="#cb39-559" aria-hidden="true" tabindex="-1"></a>tools.v_out_ogr(</span>
+<span id="cb39-560"><a href="#cb39-560" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span><span class="st">"results"</span>, output<span class="op">=</span><span class="st">"results.json"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"GeoJSON"</span>, lco<span class="op">=</span><span class="st">"RFC7946=YES"</span></span>
+<span id="cb39-561"><a href="#cb39-561" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb39-562"><a href="#cb39-562" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-563"><a href="#cb39-563" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-564"><a href="#cb39-564" aria-hidden="true" tabindex="-1"></a>We will use <span class="co">[</span><span class="ot">folium</span><span class="co">](https://python-visualization.github.io/folium/)</span> to create an interactive map.</span>
+<span id="cb39-565"><a href="#cb39-565" aria-hidden="true" tabindex="-1"></a>The darker colors represent higher fetch values.</span>
+<span id="cb39-566"><a href="#cb39-566" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-569"><a href="#cb39-569" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb39-570"><a href="#cb39-570" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> geopandas <span class="im">as</span> gpd</span>
+<span id="cb39-571"><a href="#cb39-571" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> folium</span>
+<span id="cb39-572"><a href="#cb39-572" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> branca.colormap <span class="im">as</span> cm</span>
+<span id="cb39-573"><a href="#cb39-573" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-574"><a href="#cb39-574" aria-hidden="true" tabindex="-1"></a><span class="co"># Load GeoJSON</span></span>
+<span id="cb39-575"><a href="#cb39-575" aria-hidden="true" tabindex="-1"></a>gdf <span class="op">=</span> gpd.read_file(<span class="st">"results.json"</span>)</span>
+<span id="cb39-576"><a href="#cb39-576" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-577"><a href="#cb39-577" aria-hidden="true" tabindex="-1"></a>values <span class="op">=</span> gdf[<span class="st">"fetch"</span>]</span>
+<span id="cb39-578"><a href="#cb39-578" aria-hidden="true" tabindex="-1"></a>colormap <span class="op">=</span> cm.linear.YlGnBu_07.scale(values.<span class="bu">min</span>(), values.<span class="bu">max</span>())</span>
+<span id="cb39-579"><a href="#cb39-579" aria-hidden="true" tabindex="-1"></a>colormap.caption <span class="op">=</span> <span class="st">"Weighted Fetch"</span></span>
+<span id="cb39-580"><a href="#cb39-580" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-581"><a href="#cb39-581" aria-hidden="true" tabindex="-1"></a><span class="co"># Center map at the mean location</span></span>
+<span id="cb39-582"><a href="#cb39-582" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> folium.Map(</span>
+<span id="cb39-583"><a href="#cb39-583" aria-hidden="true" tabindex="-1"></a>    location<span class="op">=</span>[gdf.geometry.y.mean(), gdf.geometry.x.mean()],</span>
+<span id="cb39-584"><a href="#cb39-584" aria-hidden="true" tabindex="-1"></a>    zoom_start<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb39-585"><a href="#cb39-585" aria-hidden="true" tabindex="-1"></a>    tiles<span class="op">=</span><span class="st">"CartoDB positron"</span>,</span>
+<span id="cb39-586"><a href="#cb39-586" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb39-587"><a href="#cb39-587" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-588"><a href="#cb39-588" aria-hidden="true" tabindex="-1"></a><span class="co"># Add points</span></span>
+<span id="cb39-589"><a href="#cb39-589" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _, row <span class="kw">in</span> gdf.iterrows():</span>
+<span id="cb39-590"><a href="#cb39-590" aria-hidden="true" tabindex="-1"></a>    folium.CircleMarker(</span>
+<span id="cb39-591"><a href="#cb39-591" aria-hidden="true" tabindex="-1"></a>        location<span class="op">=</span>(row.geometry.y, row.geometry.x),</span>
+<span id="cb39-592"><a href="#cb39-592" aria-hidden="true" tabindex="-1"></a>        radius<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb39-593"><a href="#cb39-593" aria-hidden="true" tabindex="-1"></a>        weight<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb39-594"><a href="#cb39-594" aria-hidden="true" tabindex="-1"></a>        fill<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb39-595"><a href="#cb39-595" aria-hidden="true" tabindex="-1"></a>        fill_color<span class="op">=</span>colormap(row[<span class="st">"fetch"</span>]),</span>
+<span id="cb39-596"><a href="#cb39-596" aria-hidden="true" tabindex="-1"></a>        fill_opacity<span class="op">=</span><span class="fl">0.7</span>,</span>
+<span id="cb39-597"><a href="#cb39-597" aria-hidden="true" tabindex="-1"></a>        tooltip<span class="op">=</span><span class="ss">f"Weighted Fetch: </span><span class="sc">{</span>row[<span class="st">'fetch'</span>]<span class="sc">:.2f}</span><span class="ss">"</span></span>
+<span id="cb39-598"><a href="#cb39-598" aria-hidden="true" tabindex="-1"></a>    ).add_to(m)</span>
+<span id="cb39-599"><a href="#cb39-599" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-600"><a href="#cb39-600" aria-hidden="true" tabindex="-1"></a><span class="co"># Add colormap legend</span></span>
+<span id="cb39-601"><a href="#cb39-601" aria-hidden="true" tabindex="-1"></a>colormap.add_to(m)</span>
+<span id="cb39-602"><a href="#cb39-602" aria-hidden="true" tabindex="-1"></a>m</span>
+<span id="cb39-603"><a href="#cb39-603" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb39-604"><a href="#cb39-604" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-605"><a href="#cb39-605" aria-hidden="true" tabindex="-1"></a><span class="al">![Final weighted wind fetch map](images/thumbnail.webp)</span></span>
+<span id="cb39-606"><a href="#cb39-606" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-607"><a href="#cb39-607" aria-hidden="true" tabindex="-1"></a>Note that estuaries have much lower fetch values, while the highest fetch occurs along the east coast of Bells and Davis Islands, driven by the northeast orientation of Core Sound and the prevailing winds.</span>
+<span id="cb39-608"><a href="#cb39-608" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-609"><a href="#cb39-609" aria-hidden="true" tabindex="-1"></a><span class="fu"># References</span></span>
+<span id="cb39-610"><a href="#cb39-610" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-611"><a href="#cb39-611" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Rohweder, J., Rogala, J. T., Johnson, B. L., Anderson, D., Clark, S., Chamberlin, F., Potter, D.,</span>
+<span id="cb39-612"><a href="#cb39-612" aria-hidden="true" tabindex="-1"></a>and Runyon, K., 2012, [Application of Wind Fetch and Wave Models for Habitat Rehabilitation</span>
+<span id="cb39-613"><a href="#cb39-613" aria-hidden="true" tabindex="-1"></a>and Enhancement Projects – 2012 Update](https://www.umesc.usgs.gov/management/dss/wind_fetch_wave/wind_fetch_wave_2012update/wind_wave_2012_update_070814.pdf). Contract report prepared for U.S. Army Corps of Engineers’ Upper Mississippi River Restoration – Environmental Management Program. 52 p.</span>
+<span id="cb39-614"><a href="#cb39-614" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-615"><a href="#cb39-615" aria-hidden="true" tabindex="-1"></a><span class="fu"># Acknowledgements</span></span>
+<span id="cb39-616"><a href="#cb39-616" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-617"><a href="#cb39-617" aria-hidden="true" tabindex="-1"></a>The development of this tutorial was supported by NSF Award #2322073, granted to Natrx, Inc.</span>
+<span id="cb39-618"><a href="#cb39-618" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-619"><a href="#cb39-619" aria-hidden="true" tabindex="-1"></a>NC coastline photo by <span class="co">[</span><span class="ot">Samuel Cruz</span><span class="co">](https://unsplash.com/@samuelcruz?utm_content=creditCopyText&amp;utm_medium=referral&amp;utm_source=unsplash)</span> on <span class="co">[</span><span class="ot">Unsplash</span><span class="co">](https://unsplash.com/photos/a-beach-with-houses-and-water-danWxMtwW_g?utm_content=creditCopyText&amp;utm_medium=referral&amp;utm_source=unsplash)</span>.</span>
+<span id="cb39-620"><a href="#cb39-620" aria-hidden="true" tabindex="-1"></a>      </span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Partially supported by US NSF <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=2303651"><img src="../../../images/logos/NSF_Official_logo_100x100.png" class="img-fluid" alt="NSF" width="45"></a></p>
+</div>   
+    <div class="nav-footer-center">
+<p>Content is dual-licensed under <a href="https://www.gnu.org/licenses/fdl-1.2.html">GFDL-1.2-or-later</a> and <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA-4.0</a></p>
+<div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/OSGeo/grass-tutorials/edit/main/content/tutorials/windfetch/windfetch.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/blob/main/content/tutorials/windfetch/windfetch.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item">
+    <a class="nav-link" href="https://github.com/OSGeo/grass">
+<p><i class="fa-brands fa-github" aria-label="github"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://discourse.osgeo.org/c/grass/62">
+<p><i class="fa-brands fa-discourse" aria-label="discourse"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://gitter.im/grassgis/community">
+<p><i class="fa-brands fa-gitter" aria-label="gitter"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://linkedin.com/company/grass-gis">
+<p><i class="fa-brands fa-linkedin" aria-label="linkedin"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://fosstodon.org/@grassgis">
+<p><i class="fa-brands fa-mastodon" aria-label="mastodon"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://x.com/grassgis">
+<p><i class="fa-brands fa-x-twitter" aria-label="x-twitter"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://www.youtube.com/@grass-gis">
+<p><i class="fa-brands fa-youtube" aria-label="youtube"></i></p>
+</a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

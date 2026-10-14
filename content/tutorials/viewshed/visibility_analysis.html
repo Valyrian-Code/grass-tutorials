@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Rajveer Bishnoi">
+<meta name="dcterms.date" content="2026-07-05">
+<meta name="description" content="Use r.viewshed and USGS terrain data to explore why fire lookout towers stand where they do, how far they can see, and how well a network of them covers a national forest.">
+
+<title>Visibility Analysis with GRASS: Fire Lookout Towers – (Local) Learn GRASS</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../../images/favicon.ico" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-66c3c909b4863afd39f8c1a9684862f1.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-129134f29a76a6181c5c97a8655f1195.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-66c3c909b4863afd39f8c1a9684862f1.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-a5fd71da80d94be68a097476d4858793.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-a5fd71da80d94be68a097476d4858793.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-a5fd71da80d94be68a097476d4858793.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/quarto-contrib/fontawesome6-0.1.0/all.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-contrib/fontawesome6-0.1.0/latex-fontsize.css" rel="stylesheet">
+<script src="../../../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../../../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<meta property="og:title" content="Visibility Analysis with GRASS: Fire Lookout Towers – (Local) Learn GRASS">
+<meta property="og:description" content="Use r.viewshed and USGS terrain data to explore why fire lookout towers stand where they do, how far they can see, and how well a network of them covers a national forest.">
+<meta property="og:image" content="https://grass-tutorials.osgeo.org/content/tutorials/viewshed/images/thumbnail.webp">
+<meta property="og:site_name" content="(Local) Learn GRASS">
+<meta name="twitter:title" content="Visibility Analysis with GRASS: Fire Lookout Towers – (Local) Learn GRASS">
+<meta name="twitter:description" content="Use r.viewshed and USGS terrain data to explore why fire lookout towers stand where they do, how far they can see, and how well a network of them covers a national forest.">
+<meta name="twitter:image" content="https://grass-tutorials.osgeo.org/content/tutorials/viewshed/images/thumbnail.webp">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../../../images/logos/small/grass-logo-white-simple@05x.png" alt="Small sized GRASS icon colored white with GRASS shape" class="navbar-logo light-content">
+    <img src="../../../images/logos/small/grass-logo-green-simple@05x.png" alt="Small sized GRASS icon colored GRASS green with GRASS shape" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../../../index.html">
+    <span class="navbar-title">Learn GRASS</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+    <div class="dropdown">
+      <a href="" title="" id="quarto-navigation-tool-dropdown-0" class="quarto-navigation-tool dropdown-toggle px-1" data-bs-toggle="dropdown" aria-expanded="false" role="link" aria-label=""><i class="bi bi-github"></i></a>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quarto-navigation-tool-dropdown-0">
+          <li>
+            <a class="dropdown-item quarto-navbar-tools-item" href="https://github.com/OSGeo/grass-tutorials">
+            Source Code
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item quarto-navbar-tools-item" href="https://github.com/OSGeo/grass-tutorials/issues">
+            Report an Issue
+            </a>
+          </li>
+      </ul>
+    </div>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar"><div class="quarto-margin-header"><div class="margin-header-item">
+<p><a href="https://numfocus.org/donate-to-grass" class="btn btn-outline-support" role="button" data-align="center"><i class="fa-solid fa-heart" aria-label="heart"></i> Support GRASS</a></p>
+</div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of Contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#getting-the-elevation-data" id="toc-getting-the-elevation-data" class="nav-link" data-scroll-target="#getting-the-elevation-data">Getting the elevation data</a></li>
+  <li><a href="#the-study-area" id="toc-the-study-area" class="nav-link" data-scroll-target="#the-study-area">The study area</a></li>
+  <li><a href="#why-build-a-tower-observer-height" id="toc-why-build-a-tower-observer-height" class="nav-link" data-scroll-target="#why-build-a-tower-observer-height">Why build a tower? Observer height</a></li>
+  <li><a href="#seeing-smoke-not-ground" id="toc-seeing-smoke-not-ground" class="nav-link" data-scroll-target="#seeing-smoke-not-ground">Seeing smoke, not ground</a></li>
+  <li><a href="#the-tower-network" id="toc-the-tower-network" class="nav-link" data-scroll-target="#the-tower-network">The tower network</a></li>
+  <li><a href="#where-should-a-fourth-tower-go" id="toc-where-should-a-fourth-tower-go" class="nav-link" data-scroll-target="#where-should-a-fourth-tower-go">Where should a fourth tower go?</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/OSGeo/grass-tutorials/edit/main/content/tutorials/viewshed/visibility_analysis.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/blob/main/content/tutorials/viewshed/visibility_analysis.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="visibility_analysis.ipynb" download="visibility_analysis.ipynb"><i class="bi bi-journal-code"></i>Jupyter</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Visibility Analysis with GRASS: Fire Lookout Towers</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">raster</div>
+    <div class="quarto-category">terrain</div>
+    <div class="quarto-category">visualization</div>
+    <div class="quarto-category">intermediate</div>
+    <div class="quarto-category">Python</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    <p>Use r.viewshed and USGS terrain data to explore why fire lookout towers stand where they do, how far they can see, and how well a network of them covers a national forest.</p>
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Rajveer Bishnoi </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 5, 2026</p>
+    </div>
+  </div>
+  
+    <div>
+    <div class="quarto-title-meta-heading">Modified</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date-modified">October 14, 2026</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>For much of the twentieth century, wildfires in the United States were spotted by people. Lookouts climbed towers on high summits and scanned the horizon for smoke, because the earlier a fire is spotted, the easier it is to contain. Siting those towers was a visibility problem: where should a tower go so it can see as much of the forest as possible?</p>
+<p>We can reconstruct that reasoning with GRASS. A viewshed is the area of terrain visible from an observation point, computed by <a href="https://grass.osgeo.org/grass-stable/manuals/r.viewshed.html">r.viewshed</a> by tracing lines of sight across a digital elevation model. Our study area is the Nantahala National Forest in western North Carolina, where three historic lookout towers still stand along the Appalachian Trail near the town of Franklin: Wayah Bald, Wesser Bald, and Albert Mountain. Using them, we will answer four questions:</p>
+<ol type="1">
+<li>Why put the lookout on a tower instead of standing on the summit?</li>
+<li>Does the curvature of the Earth matter at these distances?</li>
+<li>How does a rising smoke column change what a tower can detect?</li>
+<li>How much of the forest does the three-tower network cover, and where should a fourth tower go?</li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/study_area.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="The fire towers of the Nantahala National Forest on the terrain they were built to watch."><img src="images/study_area.webp" class="img-fluid figure-img" alt="The fire towers of the Nantahala National Forest on the terrain they were built to watch."></a></p>
+<figcaption>The fire towers of the Nantahala National Forest on the terrain they were built to watch.</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="How to run this tutorial">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>How to run this tutorial
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The code uses the GRASS Python API in a Jupyter notebook. If you are new to running GRASS from Python, see the <a href="https://grass-tutorials.osgeo.org/content/tutorials/get_started/fast_track_grass_and_python.html">Get started with GRASS &amp; Python</a> tutorial. Every step also works from the GRASS GUI or command line; use the tool name (for example <code>r.viewshed</code>) with the same parameters.</p>
+</div>
+</div>
+</section>
+<section id="getting-the-elevation-data" class="level1">
+<h1>Getting the elevation data</h1>
+<p>The towers are real places, so rather than use a prepackaged sample dataset we download the terrain around them from the USGS. We create a new GRASS project in UTM zone 17N (EPSG:32617) with <a href="https://grass.osgeo.org/grass-stable/manuals/libpython/script.html#script.core.create_project">create_project</a>, then fetch 1 arc-second (about 30 m) elevation from the USGS National Map with <a href="https://grass.osgeo.org/grass-stable/manuals/addons/r.in.usgs.html">r.in.usgs</a>, an add-on installed with <a href="https://grass.osgeo.org/grass-stable/manuals/g.extension.html">g.extension</a>.</p>
+<div id="a1c880d9" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>sys.path.append(</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    subprocess.check_output([<span class="st">"grass"</span>, <span class="st">"--config"</span>, <span class="st">"python_path"</span>], text<span class="op">=</span><span class="va">True</span>).strip()</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> grass.script <span class="im">as</span> gs</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> grass.jupyter <span class="im">as</span> gj</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> grass.tools <span class="im">import</span> Tools</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the project once, then start a session in it</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>project <span class="op">=</span> Path.home() <span class="op">/</span> <span class="st">"nantahala"</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> project.exists():</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    gs.create_project(project, epsg<span class="op">=</span><span class="st">"32617"</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>session <span class="op">=</span> gj.init(project)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>tools <span class="op">=</span> Tools()</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>tools.g_extension(extension<span class="op">=</span><span class="st">"r.in.usgs"</span>)   <span class="co"># install the add-on (only needed once)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="86327166" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A ~40 x 39 km window over the Nantahala Mountains, at 30 m resolution</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>tools.g_region(n<span class="op">=</span><span class="dv">3916000</span>, s<span class="op">=</span><span class="dv">3877000</span>, w<span class="op">=</span><span class="dv">252000</span>, e<span class="op">=</span><span class="dv">292000</span>, res<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Download and import the current National Elevation Dataset for this region</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>tools.r_in_usgs(product<span class="op">=</span><span class="st">"ned"</span>, ned_dataset<span class="op">=</span><span class="st">"ned1sec"</span>, output_name<span class="op">=</span><span class="st">"elevation"</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                memory<span class="op">=</span><span class="dv">1000</span>, nprocs<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>tools.g_region(raster<span class="op">=</span><span class="st">"elevation"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="About the download">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>About the download
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This downloads the current 1 arc-second NED tile for the area (about 58 MB) and takes a couple of minutes, so the cell is not instant. Add <code>flags="i"</code> first to preview the tiles and total size without downloading. USGS occasionally republishes its elevation data, so the exact areas reported below may shift a little over time.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="GRASS version">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>GRASS version
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The examples use the <a href="https://grass.osgeo.org/grass-stable/manuals/python_intro.html">grass.tools API</a> (the <code>Tools</code> class), introduced in GRASS 8.5. On earlier versions you can run the same tools with <code>gs.run_command("r.viewshed", ...)</code>.</p>
+</div>
+</div>
+</section>
+<section id="the-study-area" class="level1">
+<h1>The study area</h1>
+<p>Let’s place the three towers and look at the terrain they watch over. We enter their coordinates (converted from the published latitude and longitude to UTM 17N) with <a href="https://grass.osgeo.org/grass-stable/manuals/v.in.ascii.html">v.in.ascii</a>, reading them straight from a text buffer with <code>StringIO</code>. We also record the height of each tower’s cab above the ground, then read the summit elevation from the DEM with <a href="https://grass.osgeo.org/grass-stable/manuals/v.what.rast.html">v.what.rast</a>.</p>
+<div id="db9fd2a9" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>towers_csv <span class="op">=</span> <span class="st">"""266819,3896041,Wayah Bald,16</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="st">265577,3906808,Wesser Bald,9</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="st">274053,3881661,Albert Mountain,12"""</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>tools.v_in_ascii(</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span>io.StringIO(towers_csv), output<span class="op">=</span><span class="st">"towers"</span>, separator<span class="op">=</span><span class="st">"comma"</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="st">"x double precision, y double precision, name varchar(20), tower_m integer"</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="dv">1</span>, y<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>tools.v_what_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, raster<span class="op">=</span><span class="st">"elevation"</span>, column<span class="op">=</span><span class="st">"base_elev"</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.v_db_select(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>).text)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The summits stand well above the surrounding valleys, from about 1400 m at Wesser Bald to 1630 m at Wayah Bald. We render a shaded-relief base with <a href="https://grass.osgeo.org/grass-stable/manuals/r.relief.html">r.relief</a>, drape the elevation colors over it with <a href="https://grass.osgeo.org/grass-stable/manuals/r.shade.html">r.shade</a>, and add the towers. A small helper labels each tower with <a href="https://grass.osgeo.org/grass-stable/manuals/d.text.html">d.text</a> just to the right of its position in the current region.</p>
+<div id="abd925bf" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>tools.r_relief(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"relief"</span>, zscale<span class="op">=</span><span class="fl">1.5</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"elevation"</span>, color<span class="op">=</span><span class="st">"elevation"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>tools.r_shade(shade<span class="op">=</span><span class="st">"relief"</span>, color<span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"shaded_elev"</span>, brighten<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> label_towers(m, only<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Write each tower's name on map m, offset to the right of its marker."""</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> tools.g_region(flags<span class="op">=</span><span class="st">"g"</span>).keyval</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    w, e, s, n <span class="op">=</span> <span class="bu">float</span>(r[<span class="st">"w"</span>]), <span class="bu">float</span>(r[<span class="st">"e"</span>]), <span class="bu">float</span>(r[<span class="st">"s"</span>]), <span class="bu">float</span>(r[<span class="st">"n"</span>])</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> rec <span class="kw">in</span> tools.v_db_select(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>)[<span class="st">"records"</span>]:</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> only <span class="kw">and</span> rec[<span class="st">"name"</span>] <span class="kw">not</span> <span class="kw">in</span> only:</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        x_pct <span class="op">=</span> (rec[<span class="st">"x"</span>] <span class="op">-</span> w) <span class="op">/</span> (e <span class="op">-</span> w) <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        y_pct <span class="op">=</span> (rec[<span class="st">"y"</span>] <span class="op">-</span> s) <span class="op">/</span> (n <span class="op">-</span> s) <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        m.d_text(text<span class="op">=</span>rec[<span class="st">"name"</span>], at<span class="op">=</span>(x_pct <span class="op">+</span> <span class="fl">2.2</span>, y_pct <span class="op">-</span> <span class="fl">0.9</span>), color<span class="op">=</span><span class="st">"black"</span>,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>                 size<span class="op">=</span><span class="fl">2.8</span>, bgcolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>study.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"shaded_elev"</span>)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>study.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>, size<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>             fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>label_towers(study)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>study.d_legend(raster<span class="op">=</span><span class="st">"elevation"</span>, at<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">35</span>, <span class="dv">90</span>, <span class="dv">93</span>), flags<span class="op">=</span><span class="st">"b"</span>, fontsize<span class="op">=</span><span class="dv">14</span>, title<span class="op">=</span><span class="st">"m"</span>)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>study.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>study.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="why-build-a-tower-observer-height" class="level1">
+<h1>Why build a tower? Observer height</h1>
+<p>A lookout standing on Wayah Bald sees a certain area; the same lookout in the tower cab sees more, because height clears the nearest ridges. The <code>observer_elevation</code> parameter sets the eye height above the ground, and the <code>-b</code> flag returns a boolean map where 1 means visible. Historic lookouts were expected to watch a radius of roughly 20 miles, so we cap the search at <code>max_distance=32000</code> (32 km) and, at that range, apply Earth-curvature correction with <code>-c</code> (see the note below).</p>
+<div id="87ce54d8" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>WAYAH <span class="op">=</span> (<span class="dv">266819</span>, <span class="dv">3896041</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># A person standing on the summit (eye height 1.75 m)</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"wayah_ground"</span>, coordinates<span class="op">=</span>WAYAH,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                 observer_elevation<span class="op">=</span><span class="fl">1.75</span>, max_distance<span class="op">=</span><span class="dv">32000</span>, flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># The same lookout in the 16 m tower cab</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"wayah_tower"</span>, coordinates<span class="op">=</span>WAYAH,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                 observer_elevation<span class="op">=</span><span class="dv">16</span>, max_distance<span class="op">=</span><span class="dv">32000</span>, flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="https://grass.osgeo.org/grass-stable/manuals/r.report.html">r.report</a> gives the area of each class in a viewshed. Category 1 is the visible area; here it grows from about 165 km² at ground level to 277 km² from the tower.</p>
+<div id="3413e8ff" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"wayah_ground"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"wayah_tower"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>That is nearly 70% more visible area for 16 m of extra height, which is what made the towers worth building. We draw the ground-level viewshed in dark red and the extra area the tower adds in orange, zooming in around Wayah Bald.</p>
+<div id="2e7391ce" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"ground_vis = if(wayah_ground == 1, 1, null())"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"tower_gain = if(wayah_tower == 1 &amp;&amp; wayah_ground == 0, 1, null())"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"ground_vis"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 178:24:43"</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"tower_gain"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 239:138:98"</span>))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Save a closer view around Wayah Bald for this and the next map</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>tools.g_region(n<span class="op">=</span><span class="dv">3908000</span>, s<span class="op">=</span><span class="dv">3884000</span>, w<span class="op">=</span><span class="dv">252000</span>, e<span class="op">=</span><span class="dv">284000</span>, res<span class="op">=</span><span class="dv">30</span>, save<span class="op">=</span><span class="st">"wayah_zoom"</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>tools.g_region(raster<span class="op">=</span><span class="st">"elevation"</span>)   <span class="co"># keep the full region for analysis</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>height_map <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>, saved_region<span class="op">=</span><span class="st">"wayah_zoom"</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>height_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"relief"</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>height_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"tower_gain"</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>height_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"ground_vis"</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>height_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, where<span class="op">=</span><span class="st">"name='Wayah Bald'"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>                  size<span class="op">=</span><span class="dv">12</span>, fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>label_towers(height_map, only<span class="op">=</span>[<span class="st">"Wayah Bald"</span>])</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>height_map.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>height_map.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/observer_height.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="From Wayah Bald: visible standing on the summit (dark red) and the extra area gained from the 16 m tower (orange)."><img src="images/observer_height.webp" class="img-fluid figure-img" alt="From Wayah Bald: visible standing on the summit (dark red) and the extra area gained from the 16 m tower (orange)."></a></p>
+<figcaption>From Wayah Bald: visible standing on the summit (dark red) and the extra area gained from the 16 m tower (orange).</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Does Earth curvature matter here?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Does Earth curvature matter here?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Over tens of kilometers, the curve of the Earth drops distant terrain below the line of sight. <code>r.viewshed</code> corrects for this with the <code>-c</code> flag. Rerunning the tower viewshed without <code>-c</code> reports about 282 km² instead of 277 km², an overestimate of roughly 2%. The effect is small here because visibility in these steep mountains is limited by intervening ridges rather than by the horizon; over flat land or water at the same range the correction matters much more. Atmospheric refraction, which bends light back down slightly, is a separate effect enabled by the <code>-r</code> flag with <code>refraction_coeff</code>; we leave it off.</p>
+</div>
+</div>
+</section>
+<section id="seeing-smoke-not-ground" class="level1">
+<h1>Seeing smoke, not ground</h1>
+<p>A lookout watches for smoke rising above the canopy, not for the forest floor. A column of smoke a few meters tall can clear a ridge that hides the ground behind it. <code>r.viewshed</code> models this with <code>target_elevation</code>, the height of the target above the ground. We set it to 15 m, a modest smoke column.</p>
+<div id="bd08ac84" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"wayah_smoke"</span>, coordinates<span class="op">=</span>WAYAH,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                 observer_elevation<span class="op">=</span><span class="dv">16</span>, target_elevation<span class="op">=</span><span class="dv">15</span>, max_distance<span class="op">=</span><span class="dv">32000</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                 flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"wayah_smoke"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Allowing for a 15 m smoke column raises the detectable area from 277 km² to about 412 km², nearly 50% more. In the map below the dark red is the tower’s full terrain view (the 277 km² baseline) and orange is the extra area where the ground is hidden but a 15 m smoke column would still be visible.</p>
+<div id="97276b9a" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"terrain_vis = if(wayah_tower == 1, 1, null())"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"smoke_gain = if(wayah_smoke == 1 &amp;&amp; wayah_tower == 0, 1, null())"</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"terrain_vis"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 178:24:43"</span>))</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"smoke_gain"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 253:184:99"</span>))</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>smoke_map <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>, saved_region<span class="op">=</span><span class="st">"wayah_zoom"</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>smoke_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"relief"</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>smoke_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"smoke_gain"</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>smoke_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"terrain_vis"</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>smoke_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, where<span class="op">=</span><span class="st">"name='Wayah Bald'"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                 size<span class="op">=</span><span class="dv">12</span>, fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>label_towers(smoke_map, only<span class="op">=</span>[<span class="st">"Wayah Bald"</span>])</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>smoke_map.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>smoke_map.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/smoke_detection.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Wayah Bald tower: terrain visible (dark red) and the extra area where a 15 m smoke column is detectable (orange)."><img src="images/smoke_detection.webp" class="img-fluid figure-img" alt="Wayah Bald tower: terrain visible (dark red) and the extra area where a 15 m smoke column is detectable (orange)."></a></p>
+<figcaption>Wayah Bald tower: terrain visible (dark red) and the extra area where a 15 m smoke column is detectable (orange).</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-tower-network" class="level1">
+<h1>The tower network</h1>
+<p>One tower leaves gaps. Towers with overlapping views fill in each other’s blind spots. We loop over the three towers, compute a smoke-detection viewshed for each using its own cab height, and add the boolean maps with <a href="https://grass.osgeo.org/grass-stable/manuals/r.series.html">r.series</a>. The sum tells us how many towers can detect a fire at each cell.</p>
+<div id="8e89e720" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>towers <span class="op">=</span> tools.v_db_select(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>)[<span class="st">"records"</span>]</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>detection_maps <span class="op">=</span> []</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t <span class="kw">in</span> towers:</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    name <span class="op">=</span> t[<span class="st">"name"</span>].split()[<span class="dv">0</span>].lower()   <span class="co"># wayah, wesser, albert</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> <span class="ss">f"detect_</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span>out, coordinates<span class="op">=</span>(t[<span class="st">"x"</span>], t[<span class="st">"y"</span>]),</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>                     observer_elevation<span class="op">=</span>t[<span class="st">"tower_m"</span>], target_elevation<span class="op">=</span><span class="dv">15</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>                     max_distance<span class="op">=</span><span class="dv">32000</span>, flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    detection_maps.append(out)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co"># r.series sums to a floating-point map; make it integer so the classes are 1, 2, 3</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>tools.r_series(<span class="bu">input</span><span class="op">=</span>detection_maps, output<span class="op">=</span><span class="st">"coverage_sum"</span>, method<span class="op">=</span><span class="st">"sum"</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"coverage = int(coverage_sum)"</span>)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>tools.r_null(<span class="bu">map</span><span class="op">=</span><span class="st">"coverage"</span>, setnull<span class="op">=</span><span class="dv">0</span>)   <span class="co"># drop cells that are not seen by any tower</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>How much of the forest does the network cover? <a href="https://grass.osgeo.org/grass-stable/manuals/r.report.html">r.report</a> returns per-class areas, and its JSON output turns into a tidy table with pandas.</p>
+<div id="a8e7e9ff" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>report <span class="op">=</span> tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"coverage"</span>, units<span class="op">=</span>[<span class="st">"k"</span>, <span class="st">"p"</span>], <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cat <span class="kw">in</span> report[<span class="st">"categories"</span>]:</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cat[<span class="st">"category"</span>] <span class="kw">not</span> <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>):   <span class="co"># skip any no-data class</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    area <span class="op">=</span> <span class="bu">next</span>(u[<span class="st">"value"</span>] <span class="cf">for</span> u <span class="kw">in</span> cat[<span class="st">"units"</span>] <span class="cf">if</span> <span class="st">"kilo"</span> <span class="kw">in</span> u[<span class="st">"unit"</span>])</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    pct <span class="op">=</span> <span class="bu">next</span>(u[<span class="st">"value"</span>] <span class="cf">for</span> u <span class="kw">in</span> cat[<span class="st">"units"</span>] <span class="cf">if</span> u[<span class="st">"unit"</span>] <span class="op">==</span> <span class="st">"percent"</span>)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    rows.append({<span class="st">"seen by (towers)"</span>: cat[<span class="st">"category"</span>],</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"area (km²)"</span>: <span class="bu">round</span>(area, <span class="dv">1</span>), <span class="st">"share of region"</span>: <span class="ss">f"</span><span class="sc">{</span>pct<span class="sc">:.1f}</span><span class="ss">%"</span>})</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>seen by (towers)</th>
+<th>area (km²)</th>
+<th>share of region</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>416.4</td>
+<td>26.7%</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>214.8</td>
+<td>13.7%</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>61.1</td>
+<td>3.9%</td>
+</tr>
+</tbody>
+</table>
+<p>The three towers together watch about 692 km², or 44% of this 1,562 km² region. Only 4% is covered by all three at once, along the central ridges where their circles overlap. We map the coverage with one color per level.</p>
+<div id="d2ea0a03" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"coverage"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 254:224:139</span><span class="ch">\n</span><span class="st">2 252:141:89</span><span class="ch">\n</span><span class="st">3 213:62:79"</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>coverage_map <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>coverage_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"relief"</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>coverage_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"coverage"</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>coverage_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>, size<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                    fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>label_towers(coverage_map)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>coverage_map.d_legend(raster<span class="op">=</span><span class="st">"coverage"</span>, at<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">20</span>, <span class="dv">90</span>, <span class="dv">93</span>), flags<span class="op">=</span><span class="st">"b"</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>                      use<span class="op">=</span>[<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>], fontsize<span class="op">=</span><span class="dv">14</span>, title<span class="op">=</span><span class="st">"towers"</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>coverage_map.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>coverage_map.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/coverage.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Network detection coverage: terrain seen by one tower (yellow), two (orange), or all three (red)."><img src="images/coverage.webp" class="img-fluid figure-img" alt="Network detection coverage: terrain seen by one tower (yellow), two (orange), or all three (red)."></a></p>
+<figcaption>Network detection coverage: terrain seen by one tower (yellow), two (orange), or all three (red).</figcaption>
+</figure>
+</div>
+</section>
+<section id="where-should-a-fourth-tower-go" class="level1">
+<h1>Where should a fourth tower go?</h1>
+<p>The gap map turns “where should a new tower go?” into a computation. A natural candidate is the highest summit that no current tower can see, since high ground has the best chance of a long view. We isolate the blind area, find its highest cell with <a href="https://grass.osgeo.org/grass-stable/manuals/r.stats.html">r.stats</a>, and test a tower there.</p>
+<div id="960d0962" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cells no tower currently see, and their elevation</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"blind = if(isnull(coverage), 1, null())"</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"blind_elev = if(isnull(coverage), elevation, null())"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># coordinates of the highest blind cell</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>cells <span class="op">=</span> tools.r_stats(<span class="bu">input</span><span class="op">=</span><span class="st">"blind_elev"</span>, flags<span class="op">=</span><span class="st">"gn"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>).json</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>peak <span class="op">=</span> <span class="bu">max</span>(cells, key<span class="op">=</span><span class="kw">lambda</span> c: c[<span class="st">"categories"</span>][<span class="dv">0</span>][<span class="st">"category"</span>])</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>cx, cy, cz <span class="op">=</span> peak[<span class="st">"east"</span>], peak[<span class="st">"north"</span>], peak[<span class="st">"categories"</span>][<span class="dv">0</span>][<span class="st">"category"</span>]</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"highest blind summit: (</span><span class="sc">{</span>cx<span class="sc">:.0f}</span><span class="ss">, </span><span class="sc">{</span>cy<span class="sc">:.0f}</span><span class="ss">), </span><span class="sc">{</span>cz<span class="sc">:.0f}</span><span class="ss"> m"</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co"># what a 12 m tower there would detect, and how much of the blind area it recovers</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"detect_new"</span>, coordinates<span class="op">=</span>(cx, cy),</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>                 observer_elevation<span class="op">=</span><span class="dv">12</span>, target_elevation<span class="op">=</span><span class="dv">15</span>, max_distance<span class="op">=</span><span class="dv">32000</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>                 flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"recovered = if(isnull(coverage) &amp;&amp; detect_new == 1, 1, null())"</span>)</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"blind"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"recovered"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The best-placed new tower recovers only about 28 km² of the 870 km² blind area, less than 4% of it. The gap map shows why: what remains unseen is mostly the valley bottoms between the ridges, and no ridgetop tower can see down into a ravine. Beyond a handful of well-sited towers, adding more brings sharply diminishing returns. Fire agencies eventually turned to aircraft patrols and, later, camera and satellite detection for exactly this reason.</p>
+<div id="48bc9f15" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"covered_now = if(!isnull(coverage), 1, null())"</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"covered_now"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 150:180:200"</span>))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"recovered"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 215:25:28"</span>))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>tools.v_in_ascii(<span class="bu">input</span><span class="op">=</span>io.StringIO(<span class="ss">f"</span><span class="sc">{</span>cx<span class="sc">:.0f}</span><span class="ss">,</span><span class="sc">{</span>cy<span class="sc">:.0f}</span><span class="ss">"</span>), output<span class="op">=</span><span class="st">"candidate"</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                 separator<span class="op">=</span><span class="st">"comma"</span>, columns<span class="op">=</span><span class="st">"x double precision, y double precision"</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                 x<span class="op">=</span><span class="dv">1</span>, y<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>site_map <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>site_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"relief"</span>)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>site_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"covered_now"</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>site_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"recovered"</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>site_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>, size<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>                fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>site_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"candidate"</span>, icon<span class="op">=</span><span class="st">"basic/star"</span>, size<span class="op">=</span><span class="dv">18</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>                fill_color<span class="op">=</span><span class="st">"yellow"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>site_map.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>site_map.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/site_optimization.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Existing coverage (blue), the candidate fourth tower (star), and the small area it recovers (red). Most gaps are valleys no ridgetop tower can see."><img src="images/site_optimization.webp" class="img-fluid figure-img" alt="Existing coverage (blue), the candidate fourth tower (star), and the small area it recovers (red). Most gaps are valleys no ridgetop tower can see."></a></p>
+<figcaption>Existing coverage (blue), the candidate fourth tower (star), and the small area it recovers (red). Most gaps are valleys no ridgetop tower can see.</figcaption>
+</figure>
+</div>
+</section>
+<section id="summary" class="level1">
+<h1>Summary</h1>
+<p>We have used <a href="https://grass.osgeo.org/grass-stable/manuals/r.viewshed.html">r.viewshed</a> on USGS elevation data to answer the four questions from the introduction:</p>
+<ul>
+<li>A 16 m tower sees nearly 70% more terrain than a person standing on the same summit (<code>observer_elevation</code>).</li>
+<li>Earth curvature (<code>-c</code>) is a small correction in this rugged terrain, where ridges rather than the horizon limit the view.</li>
+<li>A rising smoke column (<code>target_elevation</code>) can be detected over far more ground than is directly visible.</li>
+<li>Three towers cover 44% of the forest, and the gaps that remain are valleys where even a well-placed fourth tower gains little.</li>
+</ul>
+<p>To combine visibility with routes across the terrain, see <a href="../../../content/tutorials/modeling_movement/GRASS_movement.html">Modeling Movement in GRASS</a>.</p>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/grass-tutorials\.osgeo\.org");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Visibility Analysis with GRASS: Fire Lookout Towers"</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Rajveer Bishnoi"</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> 2026-07-05</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="an">date-modified:</span><span class="co"> today</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="an">lightbox:</span><span class="co"> true</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="an">image:</span><span class="co"> images/thumbnail.webp</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [raster, terrain, visualization, intermediate, Python]</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> &gt;</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">  Use r.viewshed and USGS terrain data to explore why fire lookout towers stand</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co">  where they do, how far they can see, and how well a network of them covers a</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">  national forest.</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co">  ipynb: default</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: false</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="an">engine:</span><span class="co"> jupyter</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="co">  eval: false</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a><span class="fu"># Introduction</span></span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>For much of the twentieth century, wildfires in the United States were spotted by</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>people. Lookouts climbed towers on high summits and scanned the horizon for smoke,</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>because the earlier a fire is spotted, the easier it is to contain. Siting those</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>towers was a visibility problem: where should a tower go so it can see as much of the</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>forest as possible?</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>We can reconstruct that reasoning with GRASS. A viewshed is the area of terrain</span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>visible from an observation point, computed by</span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.viewshed</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.viewshed.html)</span> by tracing</span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>lines of sight across a digital elevation model. Our study area is the Nantahala</span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>National Forest in western North Carolina, where three historic lookout towers still</span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>stand along the Appalachian Trail near the town of Franklin: Wayah Bald, Wesser Bald,</span>
+<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>and Albert Mountain. Using them, we will answer four questions:</span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Why put the lookout on a tower instead of standing on the summit?</span>
+<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Does the curvature of the Earth matter at these distances?</span>
+<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>How does a rising smoke column change what a tower can detect?</span>
+<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>How much of the forest does the three-tower network cover, and where should a fourth tower go?</span>
+<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a><span class="al">![The fire towers of the Nantahala National Forest on the terrain they were built to watch.](images/study_area.webp)</span></span>
+<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title="How to run this tutorial"}</span>
+<span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a>The code uses the GRASS Python API in a Jupyter notebook. If you are new to running</span>
+<span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a>GRASS from Python, see the</span>
+<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Get started with GRASS &amp; Python</span><span class="co">](https://grass-tutorials.osgeo.org/content/tutorials/get_started/fast_track_grass_and_python.html)</span></span>
+<span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a>tutorial. Every step also works from the GRASS GUI or command line; use the tool name</span>
+<span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a>(for example <span class="in">`r.viewshed`</span>) with the same parameters.</span>
+<span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb15-56"><a href="#cb15-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-57"><a href="#cb15-57" aria-hidden="true" tabindex="-1"></a><span class="fu"># Getting the elevation data</span></span>
+<span id="cb15-58"><a href="#cb15-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-59"><a href="#cb15-59" aria-hidden="true" tabindex="-1"></a>The towers are real places, so rather than use a prepackaged sample dataset we</span>
+<span id="cb15-60"><a href="#cb15-60" aria-hidden="true" tabindex="-1"></a>download the terrain around them from the USGS. We create a new GRASS project in UTM</span>
+<span id="cb15-61"><a href="#cb15-61" aria-hidden="true" tabindex="-1"></a>zone 17N (EPSG:32617) with</span>
+<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">create_project</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/libpython/script.html#script.core.create_project)</span>,</span>
+<span id="cb15-63"><a href="#cb15-63" aria-hidden="true" tabindex="-1"></a>then fetch 1 arc-second (about 30 m) elevation from the USGS National Map with</span>
+<span id="cb15-64"><a href="#cb15-64" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.in.usgs</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/addons/r.in.usgs.html)</span>, an</span>
+<span id="cb15-65"><a href="#cb15-65" aria-hidden="true" tabindex="-1"></a>add-on installed with</span>
+<span id="cb15-66"><a href="#cb15-66" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">g.extension</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/g.extension.html)</span>.</span>
+<span id="cb15-67"><a href="#cb15-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-70"><a href="#cb15-70" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-71"><a href="#cb15-71" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb15-72"><a href="#cb15-72" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb15-73"><a href="#cb15-73" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a>sys.path.append(</span>
+<span id="cb15-76"><a href="#cb15-76" aria-hidden="true" tabindex="-1"></a>    subprocess.check_output([<span class="st">"grass"</span>, <span class="st">"--config"</span>, <span class="st">"python_path"</span>], text<span class="op">=</span><span class="va">True</span>).strip()</span>
+<span id="cb15-77"><a href="#cb15-77" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-78"><a href="#cb15-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-79"><a href="#cb15-79" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> grass.script <span class="im">as</span> gs</span>
+<span id="cb15-80"><a href="#cb15-80" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> grass.jupyter <span class="im">as</span> gj</span>
+<span id="cb15-81"><a href="#cb15-81" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> grass.tools <span class="im">import</span> Tools</span>
+<span id="cb15-82"><a href="#cb15-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-83"><a href="#cb15-83" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the project once, then start a session in it</span></span>
+<span id="cb15-84"><a href="#cb15-84" aria-hidden="true" tabindex="-1"></a>project <span class="op">=</span> Path.home() <span class="op">/</span> <span class="st">"nantahala"</span></span>
+<span id="cb15-85"><a href="#cb15-85" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> project.exists():</span>
+<span id="cb15-86"><a href="#cb15-86" aria-hidden="true" tabindex="-1"></a>    gs.create_project(project, epsg<span class="op">=</span><span class="st">"32617"</span>)</span>
+<span id="cb15-87"><a href="#cb15-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-88"><a href="#cb15-88" aria-hidden="true" tabindex="-1"></a>session <span class="op">=</span> gj.init(project)</span>
+<span id="cb15-89"><a href="#cb15-89" aria-hidden="true" tabindex="-1"></a>tools <span class="op">=</span> Tools()</span>
+<span id="cb15-90"><a href="#cb15-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-91"><a href="#cb15-91" aria-hidden="true" tabindex="-1"></a>tools.g_extension(extension<span class="op">=</span><span class="st">"r.in.usgs"</span>)   <span class="co"># install the add-on (only needed once)</span></span>
+<span id="cb15-92"><a href="#cb15-92" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-93"><a href="#cb15-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-96"><a href="#cb15-96" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-97"><a href="#cb15-97" aria-hidden="true" tabindex="-1"></a><span class="co"># A ~40 x 39 km window over the Nantahala Mountains, at 30 m resolution</span></span>
+<span id="cb15-98"><a href="#cb15-98" aria-hidden="true" tabindex="-1"></a>tools.g_region(n<span class="op">=</span><span class="dv">3916000</span>, s<span class="op">=</span><span class="dv">3877000</span>, w<span class="op">=</span><span class="dv">252000</span>, e<span class="op">=</span><span class="dv">292000</span>, res<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb15-99"><a href="#cb15-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-100"><a href="#cb15-100" aria-hidden="true" tabindex="-1"></a><span class="co"># Download and import the current National Elevation Dataset for this region</span></span>
+<span id="cb15-101"><a href="#cb15-101" aria-hidden="true" tabindex="-1"></a>tools.r_in_usgs(product<span class="op">=</span><span class="st">"ned"</span>, ned_dataset<span class="op">=</span><span class="st">"ned1sec"</span>, output_name<span class="op">=</span><span class="st">"elevation"</span>,</span>
+<span id="cb15-102"><a href="#cb15-102" aria-hidden="true" tabindex="-1"></a>                memory<span class="op">=</span><span class="dv">1000</span>, nprocs<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-103"><a href="#cb15-103" aria-hidden="true" tabindex="-1"></a>tools.g_region(raster<span class="op">=</span><span class="st">"elevation"</span>)</span>
+<span id="cb15-104"><a href="#cb15-104" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-105"><a href="#cb15-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-106"><a href="#cb15-106" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title="About the download"}</span>
+<span id="cb15-107"><a href="#cb15-107" aria-hidden="true" tabindex="-1"></a>This downloads the current 1 arc-second NED tile for the area (about 58 MB) and takes</span>
+<span id="cb15-108"><a href="#cb15-108" aria-hidden="true" tabindex="-1"></a>a couple of minutes, so the cell is not instant. Add <span class="in">`flags="i"`</span> first to preview the</span>
+<span id="cb15-109"><a href="#cb15-109" aria-hidden="true" tabindex="-1"></a>tiles and total size without downloading. USGS occasionally republishes its elevation</span>
+<span id="cb15-110"><a href="#cb15-110" aria-hidden="true" tabindex="-1"></a>data, so the exact areas reported below may shift a little over time.</span>
+<span id="cb15-111"><a href="#cb15-111" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb15-112"><a href="#cb15-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-113"><a href="#cb15-113" aria-hidden="true" tabindex="-1"></a>::: {.callout-note title="GRASS version"}</span>
+<span id="cb15-114"><a href="#cb15-114" aria-hidden="true" tabindex="-1"></a>The examples use the <span class="co">[</span><span class="ot">grass.tools API</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/python_intro.html)</span></span>
+<span id="cb15-115"><a href="#cb15-115" aria-hidden="true" tabindex="-1"></a>(the <span class="in">`Tools`</span> class), introduced in GRASS 8.5. On earlier versions you can run the same</span>
+<span id="cb15-116"><a href="#cb15-116" aria-hidden="true" tabindex="-1"></a>tools with <span class="in">`gs.run_command("r.viewshed", ...)`</span>.</span>
+<span id="cb15-117"><a href="#cb15-117" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb15-118"><a href="#cb15-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-119"><a href="#cb15-119" aria-hidden="true" tabindex="-1"></a><span class="fu"># The study area</span></span>
+<span id="cb15-120"><a href="#cb15-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-121"><a href="#cb15-121" aria-hidden="true" tabindex="-1"></a>Let's place the three towers and look at the terrain they watch over. We enter their</span>
+<span id="cb15-122"><a href="#cb15-122" aria-hidden="true" tabindex="-1"></a>coordinates (converted from the published latitude and longitude to UTM 17N) with</span>
+<span id="cb15-123"><a href="#cb15-123" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">v.in.ascii</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/v.in.ascii.html)</span>, reading</span>
+<span id="cb15-124"><a href="#cb15-124" aria-hidden="true" tabindex="-1"></a>them straight from a text buffer with <span class="in">`StringIO`</span>. We also record the height of each</span>
+<span id="cb15-125"><a href="#cb15-125" aria-hidden="true" tabindex="-1"></a>tower's cab above the ground, then read the summit elevation from the DEM with</span>
+<span id="cb15-126"><a href="#cb15-126" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">v.what.rast</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/v.what.rast.html)</span>.</span>
+<span id="cb15-127"><a href="#cb15-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-130"><a href="#cb15-130" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-131"><a href="#cb15-131" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
+<span id="cb15-132"><a href="#cb15-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-133"><a href="#cb15-133" aria-hidden="true" tabindex="-1"></a>towers_csv <span class="op">=</span> <span class="st">"""266819,3896041,Wayah Bald,16</span></span>
+<span id="cb15-134"><a href="#cb15-134" aria-hidden="true" tabindex="-1"></a><span class="st">265577,3906808,Wesser Bald,9</span></span>
+<span id="cb15-135"><a href="#cb15-135" aria-hidden="true" tabindex="-1"></a><span class="st">274053,3881661,Albert Mountain,12"""</span></span>
+<span id="cb15-136"><a href="#cb15-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-137"><a href="#cb15-137" aria-hidden="true" tabindex="-1"></a>tools.v_in_ascii(</span>
+<span id="cb15-138"><a href="#cb15-138" aria-hidden="true" tabindex="-1"></a>    <span class="bu">input</span><span class="op">=</span>io.StringIO(towers_csv), output<span class="op">=</span><span class="st">"towers"</span>, separator<span class="op">=</span><span class="st">"comma"</span>,</span>
+<span id="cb15-139"><a href="#cb15-139" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="st">"x double precision, y double precision, name varchar(20), tower_m integer"</span>,</span>
+<span id="cb15-140"><a href="#cb15-140" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="dv">1</span>, y<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb15-141"><a href="#cb15-141" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-142"><a href="#cb15-142" aria-hidden="true" tabindex="-1"></a>tools.v_what_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, raster<span class="op">=</span><span class="st">"elevation"</span>, column<span class="op">=</span><span class="st">"base_elev"</span>)</span>
+<span id="cb15-143"><a href="#cb15-143" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.v_db_select(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>).text)</span>
+<span id="cb15-144"><a href="#cb15-144" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-145"><a href="#cb15-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-146"><a href="#cb15-146" aria-hidden="true" tabindex="-1"></a>The summits stand well above the surrounding valleys, from about 1400 m at Wesser Bald</span>
+<span id="cb15-147"><a href="#cb15-147" aria-hidden="true" tabindex="-1"></a>to 1630 m at Wayah Bald. We render a shaded-relief base with</span>
+<span id="cb15-148"><a href="#cb15-148" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.relief</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.relief.html)</span>, drape the</span>
+<span id="cb15-149"><a href="#cb15-149" aria-hidden="true" tabindex="-1"></a>elevation colors over it with</span>
+<span id="cb15-150"><a href="#cb15-150" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.shade</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.shade.html)</span>, and add the</span>
+<span id="cb15-151"><a href="#cb15-151" aria-hidden="true" tabindex="-1"></a>towers. A small helper labels each tower with</span>
+<span id="cb15-152"><a href="#cb15-152" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">d.text</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/d.text.html)</span> just to the right of</span>
+<span id="cb15-153"><a href="#cb15-153" aria-hidden="true" tabindex="-1"></a>its position in the current region.</span>
+<span id="cb15-154"><a href="#cb15-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-157"><a href="#cb15-157" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-158"><a href="#cb15-158" aria-hidden="true" tabindex="-1"></a>tools.r_relief(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"relief"</span>, zscale<span class="op">=</span><span class="fl">1.5</span>)</span>
+<span id="cb15-159"><a href="#cb15-159" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"elevation"</span>, color<span class="op">=</span><span class="st">"elevation"</span>)</span>
+<span id="cb15-160"><a href="#cb15-160" aria-hidden="true" tabindex="-1"></a>tools.r_shade(shade<span class="op">=</span><span class="st">"relief"</span>, color<span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"shaded_elev"</span>, brighten<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb15-161"><a href="#cb15-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-162"><a href="#cb15-162" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> label_towers(m, only<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb15-163"><a href="#cb15-163" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Write each tower's name on map m, offset to the right of its marker."""</span></span>
+<span id="cb15-164"><a href="#cb15-164" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> tools.g_region(flags<span class="op">=</span><span class="st">"g"</span>).keyval</span>
+<span id="cb15-165"><a href="#cb15-165" aria-hidden="true" tabindex="-1"></a>    w, e, s, n <span class="op">=</span> <span class="bu">float</span>(r[<span class="st">"w"</span>]), <span class="bu">float</span>(r[<span class="st">"e"</span>]), <span class="bu">float</span>(r[<span class="st">"s"</span>]), <span class="bu">float</span>(r[<span class="st">"n"</span>])</span>
+<span id="cb15-166"><a href="#cb15-166" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> rec <span class="kw">in</span> tools.v_db_select(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>)[<span class="st">"records"</span>]:</span>
+<span id="cb15-167"><a href="#cb15-167" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> only <span class="kw">and</span> rec[<span class="st">"name"</span>] <span class="kw">not</span> <span class="kw">in</span> only:</span>
+<span id="cb15-168"><a href="#cb15-168" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb15-169"><a href="#cb15-169" aria-hidden="true" tabindex="-1"></a>        x_pct <span class="op">=</span> (rec[<span class="st">"x"</span>] <span class="op">-</span> w) <span class="op">/</span> (e <span class="op">-</span> w) <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb15-170"><a href="#cb15-170" aria-hidden="true" tabindex="-1"></a>        y_pct <span class="op">=</span> (rec[<span class="st">"y"</span>] <span class="op">-</span> s) <span class="op">/</span> (n <span class="op">-</span> s) <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb15-171"><a href="#cb15-171" aria-hidden="true" tabindex="-1"></a>        m.d_text(text<span class="op">=</span>rec[<span class="st">"name"</span>], at<span class="op">=</span>(x_pct <span class="op">+</span> <span class="fl">2.2</span>, y_pct <span class="op">-</span> <span class="fl">0.9</span>), color<span class="op">=</span><span class="st">"black"</span>,</span>
+<span id="cb15-172"><a href="#cb15-172" aria-hidden="true" tabindex="-1"></a>                 size<span class="op">=</span><span class="fl">2.8</span>, bgcolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb15-173"><a href="#cb15-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-174"><a href="#cb15-174" aria-hidden="true" tabindex="-1"></a>study <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>)</span>
+<span id="cb15-175"><a href="#cb15-175" aria-hidden="true" tabindex="-1"></a>study.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"shaded_elev"</span>)</span>
+<span id="cb15-176"><a href="#cb15-176" aria-hidden="true" tabindex="-1"></a>study.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>, size<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb15-177"><a href="#cb15-177" aria-hidden="true" tabindex="-1"></a>             fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-178"><a href="#cb15-178" aria-hidden="true" tabindex="-1"></a>label_towers(study)</span>
+<span id="cb15-179"><a href="#cb15-179" aria-hidden="true" tabindex="-1"></a>study.d_legend(raster<span class="op">=</span><span class="st">"elevation"</span>, at<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">35</span>, <span class="dv">90</span>, <span class="dv">93</span>), flags<span class="op">=</span><span class="st">"b"</span>, fontsize<span class="op">=</span><span class="dv">14</span>, title<span class="op">=</span><span class="st">"m"</span>)</span>
+<span id="cb15-180"><a href="#cb15-180" aria-hidden="true" tabindex="-1"></a>study.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb15-181"><a href="#cb15-181" aria-hidden="true" tabindex="-1"></a>study.show()</span>
+<span id="cb15-182"><a href="#cb15-182" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-183"><a href="#cb15-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-184"><a href="#cb15-184" aria-hidden="true" tabindex="-1"></a><span class="fu"># Why build a tower? Observer height</span></span>
+<span id="cb15-185"><a href="#cb15-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-186"><a href="#cb15-186" aria-hidden="true" tabindex="-1"></a>A lookout standing on Wayah Bald sees a certain area; the same lookout in the tower</span>
+<span id="cb15-187"><a href="#cb15-187" aria-hidden="true" tabindex="-1"></a>cab sees more, because height clears the nearest ridges. The <span class="in">`observer_elevation`</span></span>
+<span id="cb15-188"><a href="#cb15-188" aria-hidden="true" tabindex="-1"></a>parameter sets the eye height above the ground, and the <span class="in">`-b`</span> flag returns a boolean</span>
+<span id="cb15-189"><a href="#cb15-189" aria-hidden="true" tabindex="-1"></a>map where 1 means visible. Historic lookouts were expected to watch a radius of</span>
+<span id="cb15-190"><a href="#cb15-190" aria-hidden="true" tabindex="-1"></a>roughly 20 miles, so we cap the search at <span class="in">`max_distance=32000`</span> (32 km) and, at that</span>
+<span id="cb15-191"><a href="#cb15-191" aria-hidden="true" tabindex="-1"></a>range, apply Earth-curvature correction with <span class="in">`-c`</span> (see the note below).</span>
+<span id="cb15-192"><a href="#cb15-192" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-195"><a href="#cb15-195" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-196"><a href="#cb15-196" aria-hidden="true" tabindex="-1"></a>WAYAH <span class="op">=</span> (<span class="dv">266819</span>, <span class="dv">3896041</span>)</span>
+<span id="cb15-197"><a href="#cb15-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-198"><a href="#cb15-198" aria-hidden="true" tabindex="-1"></a><span class="co"># A person standing on the summit (eye height 1.75 m)</span></span>
+<span id="cb15-199"><a href="#cb15-199" aria-hidden="true" tabindex="-1"></a>tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"wayah_ground"</span>, coordinates<span class="op">=</span>WAYAH,</span>
+<span id="cb15-200"><a href="#cb15-200" aria-hidden="true" tabindex="-1"></a>                 observer_elevation<span class="op">=</span><span class="fl">1.75</span>, max_distance<span class="op">=</span><span class="dv">32000</span>, flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb15-201"><a href="#cb15-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-202"><a href="#cb15-202" aria-hidden="true" tabindex="-1"></a><span class="co"># The same lookout in the 16 m tower cab</span></span>
+<span id="cb15-203"><a href="#cb15-203" aria-hidden="true" tabindex="-1"></a>tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"wayah_tower"</span>, coordinates<span class="op">=</span>WAYAH,</span>
+<span id="cb15-204"><a href="#cb15-204" aria-hidden="true" tabindex="-1"></a>                 observer_elevation<span class="op">=</span><span class="dv">16</span>, max_distance<span class="op">=</span><span class="dv">32000</span>, flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb15-205"><a href="#cb15-205" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-206"><a href="#cb15-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-207"><a href="#cb15-207" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.report</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.report.html)</span> gives the area</span>
+<span id="cb15-208"><a href="#cb15-208" aria-hidden="true" tabindex="-1"></a>of each class in a viewshed. Category 1 is the visible area; here it grows from about</span>
+<span id="cb15-209"><a href="#cb15-209" aria-hidden="true" tabindex="-1"></a>165 km² at ground level to 277 km² from the tower.</span>
+<span id="cb15-210"><a href="#cb15-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-213"><a href="#cb15-213" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-214"><a href="#cb15-214" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"wayah_ground"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span>
+<span id="cb15-215"><a href="#cb15-215" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"wayah_tower"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span>
+<span id="cb15-216"><a href="#cb15-216" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-217"><a href="#cb15-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-218"><a href="#cb15-218" aria-hidden="true" tabindex="-1"></a>That is nearly 70% more visible area for 16 m of extra height, which is what made the</span>
+<span id="cb15-219"><a href="#cb15-219" aria-hidden="true" tabindex="-1"></a>towers worth building. We draw the ground-level viewshed in dark red and the extra</span>
+<span id="cb15-220"><a href="#cb15-220" aria-hidden="true" tabindex="-1"></a>area the tower adds in orange, zooming in around Wayah Bald.</span>
+<span id="cb15-221"><a href="#cb15-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-224"><a href="#cb15-224" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-225"><a href="#cb15-225" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"ground_vis = if(wayah_ground == 1, 1, null())"</span>)</span>
+<span id="cb15-226"><a href="#cb15-226" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"tower_gain = if(wayah_tower == 1 &amp;&amp; wayah_ground == 0, 1, null())"</span>)</span>
+<span id="cb15-227"><a href="#cb15-227" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"ground_vis"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 178:24:43"</span>))</span>
+<span id="cb15-228"><a href="#cb15-228" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"tower_gain"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 239:138:98"</span>))</span>
+<span id="cb15-229"><a href="#cb15-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-230"><a href="#cb15-230" aria-hidden="true" tabindex="-1"></a><span class="co"># Save a closer view around Wayah Bald for this and the next map</span></span>
+<span id="cb15-231"><a href="#cb15-231" aria-hidden="true" tabindex="-1"></a>tools.g_region(n<span class="op">=</span><span class="dv">3908000</span>, s<span class="op">=</span><span class="dv">3884000</span>, w<span class="op">=</span><span class="dv">252000</span>, e<span class="op">=</span><span class="dv">284000</span>, res<span class="op">=</span><span class="dv">30</span>, save<span class="op">=</span><span class="st">"wayah_zoom"</span>)</span>
+<span id="cb15-232"><a href="#cb15-232" aria-hidden="true" tabindex="-1"></a>tools.g_region(raster<span class="op">=</span><span class="st">"elevation"</span>)   <span class="co"># keep the full region for analysis</span></span>
+<span id="cb15-233"><a href="#cb15-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-234"><a href="#cb15-234" aria-hidden="true" tabindex="-1"></a>height_map <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>, saved_region<span class="op">=</span><span class="st">"wayah_zoom"</span>)</span>
+<span id="cb15-235"><a href="#cb15-235" aria-hidden="true" tabindex="-1"></a>height_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"relief"</span>)</span>
+<span id="cb15-236"><a href="#cb15-236" aria-hidden="true" tabindex="-1"></a>height_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"tower_gain"</span>)</span>
+<span id="cb15-237"><a href="#cb15-237" aria-hidden="true" tabindex="-1"></a>height_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"ground_vis"</span>)</span>
+<span id="cb15-238"><a href="#cb15-238" aria-hidden="true" tabindex="-1"></a>height_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, where<span class="op">=</span><span class="st">"name='Wayah Bald'"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>,</span>
+<span id="cb15-239"><a href="#cb15-239" aria-hidden="true" tabindex="-1"></a>                  size<span class="op">=</span><span class="dv">12</span>, fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-240"><a href="#cb15-240" aria-hidden="true" tabindex="-1"></a>label_towers(height_map, only<span class="op">=</span>[<span class="st">"Wayah Bald"</span>])</span>
+<span id="cb15-241"><a href="#cb15-241" aria-hidden="true" tabindex="-1"></a>height_map.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb15-242"><a href="#cb15-242" aria-hidden="true" tabindex="-1"></a>height_map.show()</span>
+<span id="cb15-243"><a href="#cb15-243" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-244"><a href="#cb15-244" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-245"><a href="#cb15-245" aria-hidden="true" tabindex="-1"></a><span class="al">![From Wayah Bald: visible standing on the summit (dark red) and the extra area gained from the 16 m tower (orange).](images/observer_height.webp)</span></span>
+<span id="cb15-246"><a href="#cb15-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-247"><a href="#cb15-247" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip title="Does Earth curvature matter here?"}</span>
+<span id="cb15-248"><a href="#cb15-248" aria-hidden="true" tabindex="-1"></a>Over tens of kilometers, the curve of the Earth drops distant terrain below the line</span>
+<span id="cb15-249"><a href="#cb15-249" aria-hidden="true" tabindex="-1"></a>of sight. <span class="in">`r.viewshed`</span> corrects for this with the <span class="in">`-c`</span> flag. Rerunning the tower</span>
+<span id="cb15-250"><a href="#cb15-250" aria-hidden="true" tabindex="-1"></a>viewshed without <span class="in">`-c`</span> reports about 282 km² instead of 277 km², an overestimate of</span>
+<span id="cb15-251"><a href="#cb15-251" aria-hidden="true" tabindex="-1"></a>roughly 2%. The effect is small here because visibility in these steep mountains is</span>
+<span id="cb15-252"><a href="#cb15-252" aria-hidden="true" tabindex="-1"></a>limited by intervening ridges rather than by the horizon; over flat land or water at</span>
+<span id="cb15-253"><a href="#cb15-253" aria-hidden="true" tabindex="-1"></a>the same range the correction matters much more. Atmospheric refraction, which bends</span>
+<span id="cb15-254"><a href="#cb15-254" aria-hidden="true" tabindex="-1"></a>light back down slightly, is a separate effect enabled by the <span class="in">`-r`</span> flag with</span>
+<span id="cb15-255"><a href="#cb15-255" aria-hidden="true" tabindex="-1"></a><span class="in">`refraction_coeff`</span>; we leave it off.</span>
+<span id="cb15-256"><a href="#cb15-256" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb15-257"><a href="#cb15-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-258"><a href="#cb15-258" aria-hidden="true" tabindex="-1"></a><span class="fu"># Seeing smoke, not ground</span></span>
+<span id="cb15-259"><a href="#cb15-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-260"><a href="#cb15-260" aria-hidden="true" tabindex="-1"></a>A lookout watches for smoke rising above the canopy, not for the forest floor. A</span>
+<span id="cb15-261"><a href="#cb15-261" aria-hidden="true" tabindex="-1"></a>column of smoke a few meters tall can clear a ridge that hides the ground behind it.</span>
+<span id="cb15-262"><a href="#cb15-262" aria-hidden="true" tabindex="-1"></a><span class="in">`r.viewshed`</span> models this with <span class="in">`target_elevation`</span>, the height of the target above the</span>
+<span id="cb15-263"><a href="#cb15-263" aria-hidden="true" tabindex="-1"></a>ground. We set it to 15 m, a modest smoke column.</span>
+<span id="cb15-264"><a href="#cb15-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-267"><a href="#cb15-267" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-268"><a href="#cb15-268" aria-hidden="true" tabindex="-1"></a>tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"wayah_smoke"</span>, coordinates<span class="op">=</span>WAYAH,</span>
+<span id="cb15-269"><a href="#cb15-269" aria-hidden="true" tabindex="-1"></a>                 observer_elevation<span class="op">=</span><span class="dv">16</span>, target_elevation<span class="op">=</span><span class="dv">15</span>, max_distance<span class="op">=</span><span class="dv">32000</span>,</span>
+<span id="cb15-270"><a href="#cb15-270" aria-hidden="true" tabindex="-1"></a>                 flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb15-271"><a href="#cb15-271" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-272"><a href="#cb15-272" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"wayah_smoke"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span>
+<span id="cb15-273"><a href="#cb15-273" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-274"><a href="#cb15-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-275"><a href="#cb15-275" aria-hidden="true" tabindex="-1"></a>Allowing for a 15 m smoke column raises the detectable area from 277 km² to about</span>
+<span id="cb15-276"><a href="#cb15-276" aria-hidden="true" tabindex="-1"></a>412 km², nearly 50% more. In the map below the dark red is the tower's full terrain</span>
+<span id="cb15-277"><a href="#cb15-277" aria-hidden="true" tabindex="-1"></a>view (the 277 km² baseline) and orange is the extra area where the ground is hidden</span>
+<span id="cb15-278"><a href="#cb15-278" aria-hidden="true" tabindex="-1"></a>but a 15 m smoke column would still be visible.</span>
+<span id="cb15-279"><a href="#cb15-279" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-282"><a href="#cb15-282" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-283"><a href="#cb15-283" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"terrain_vis = if(wayah_tower == 1, 1, null())"</span>)</span>
+<span id="cb15-284"><a href="#cb15-284" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"smoke_gain = if(wayah_smoke == 1 &amp;&amp; wayah_tower == 0, 1, null())"</span>)</span>
+<span id="cb15-285"><a href="#cb15-285" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"terrain_vis"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 178:24:43"</span>))</span>
+<span id="cb15-286"><a href="#cb15-286" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"smoke_gain"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 253:184:99"</span>))</span>
+<span id="cb15-287"><a href="#cb15-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-288"><a href="#cb15-288" aria-hidden="true" tabindex="-1"></a>smoke_map <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>, saved_region<span class="op">=</span><span class="st">"wayah_zoom"</span>)</span>
+<span id="cb15-289"><a href="#cb15-289" aria-hidden="true" tabindex="-1"></a>smoke_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"relief"</span>)</span>
+<span id="cb15-290"><a href="#cb15-290" aria-hidden="true" tabindex="-1"></a>smoke_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"smoke_gain"</span>)</span>
+<span id="cb15-291"><a href="#cb15-291" aria-hidden="true" tabindex="-1"></a>smoke_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"terrain_vis"</span>)</span>
+<span id="cb15-292"><a href="#cb15-292" aria-hidden="true" tabindex="-1"></a>smoke_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, where<span class="op">=</span><span class="st">"name='Wayah Bald'"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>,</span>
+<span id="cb15-293"><a href="#cb15-293" aria-hidden="true" tabindex="-1"></a>                 size<span class="op">=</span><span class="dv">12</span>, fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-294"><a href="#cb15-294" aria-hidden="true" tabindex="-1"></a>label_towers(smoke_map, only<span class="op">=</span>[<span class="st">"Wayah Bald"</span>])</span>
+<span id="cb15-295"><a href="#cb15-295" aria-hidden="true" tabindex="-1"></a>smoke_map.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb15-296"><a href="#cb15-296" aria-hidden="true" tabindex="-1"></a>smoke_map.show()</span>
+<span id="cb15-297"><a href="#cb15-297" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-298"><a href="#cb15-298" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-299"><a href="#cb15-299" aria-hidden="true" tabindex="-1"></a><span class="al">![Wayah Bald tower: terrain visible (dark red) and the extra area where a 15 m smoke column is detectable (orange).](images/smoke_detection.webp)</span></span>
+<span id="cb15-300"><a href="#cb15-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-301"><a href="#cb15-301" aria-hidden="true" tabindex="-1"></a><span class="fu"># The tower network</span></span>
+<span id="cb15-302"><a href="#cb15-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-303"><a href="#cb15-303" aria-hidden="true" tabindex="-1"></a>One tower leaves gaps. Towers with overlapping views fill in each other's blind spots.</span>
+<span id="cb15-304"><a href="#cb15-304" aria-hidden="true" tabindex="-1"></a>We loop over the three towers, compute a smoke-detection viewshed for each using its</span>
+<span id="cb15-305"><a href="#cb15-305" aria-hidden="true" tabindex="-1"></a>own cab height, and add the boolean maps with</span>
+<span id="cb15-306"><a href="#cb15-306" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.series</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.series.html)</span>. The sum tells</span>
+<span id="cb15-307"><a href="#cb15-307" aria-hidden="true" tabindex="-1"></a>us how many towers can detect a fire at each cell.</span>
+<span id="cb15-308"><a href="#cb15-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-311"><a href="#cb15-311" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-312"><a href="#cb15-312" aria-hidden="true" tabindex="-1"></a>towers <span class="op">=</span> tools.v_db_select(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>)[<span class="st">"records"</span>]</span>
+<span id="cb15-313"><a href="#cb15-313" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-314"><a href="#cb15-314" aria-hidden="true" tabindex="-1"></a>detection_maps <span class="op">=</span> []</span>
+<span id="cb15-315"><a href="#cb15-315" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> t <span class="kw">in</span> towers:</span>
+<span id="cb15-316"><a href="#cb15-316" aria-hidden="true" tabindex="-1"></a>    name <span class="op">=</span> t[<span class="st">"name"</span>].split()[<span class="dv">0</span>].lower()   <span class="co"># wayah, wesser, albert</span></span>
+<span id="cb15-317"><a href="#cb15-317" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> <span class="ss">f"detect_</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb15-318"><a href="#cb15-318" aria-hidden="true" tabindex="-1"></a>    tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span>out, coordinates<span class="op">=</span>(t[<span class="st">"x"</span>], t[<span class="st">"y"</span>]),</span>
+<span id="cb15-319"><a href="#cb15-319" aria-hidden="true" tabindex="-1"></a>                     observer_elevation<span class="op">=</span>t[<span class="st">"tower_m"</span>], target_elevation<span class="op">=</span><span class="dv">15</span>,</span>
+<span id="cb15-320"><a href="#cb15-320" aria-hidden="true" tabindex="-1"></a>                     max_distance<span class="op">=</span><span class="dv">32000</span>, flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb15-321"><a href="#cb15-321" aria-hidden="true" tabindex="-1"></a>    detection_maps.append(out)</span>
+<span id="cb15-322"><a href="#cb15-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-323"><a href="#cb15-323" aria-hidden="true" tabindex="-1"></a><span class="co"># r.series sums to a floating-point map; make it integer so the classes are 1, 2, 3</span></span>
+<span id="cb15-324"><a href="#cb15-324" aria-hidden="true" tabindex="-1"></a>tools.r_series(<span class="bu">input</span><span class="op">=</span>detection_maps, output<span class="op">=</span><span class="st">"coverage_sum"</span>, method<span class="op">=</span><span class="st">"sum"</span>)</span>
+<span id="cb15-325"><a href="#cb15-325" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"coverage = int(coverage_sum)"</span>)</span>
+<span id="cb15-326"><a href="#cb15-326" aria-hidden="true" tabindex="-1"></a>tools.r_null(<span class="bu">map</span><span class="op">=</span><span class="st">"coverage"</span>, setnull<span class="op">=</span><span class="dv">0</span>)   <span class="co"># drop cells that are not seen by any tower</span></span>
+<span id="cb15-327"><a href="#cb15-327" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-328"><a href="#cb15-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-329"><a href="#cb15-329" aria-hidden="true" tabindex="-1"></a>How much of the forest does the network cover?</span>
+<span id="cb15-330"><a href="#cb15-330" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.report</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.report.html)</span> returns</span>
+<span id="cb15-331"><a href="#cb15-331" aria-hidden="true" tabindex="-1"></a>per-class areas, and its JSON output turns into a tidy table with pandas.</span>
+<span id="cb15-332"><a href="#cb15-332" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-335"><a href="#cb15-335" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-336"><a href="#cb15-336" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb15-337"><a href="#cb15-337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-338"><a href="#cb15-338" aria-hidden="true" tabindex="-1"></a>report <span class="op">=</span> tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"coverage"</span>, units<span class="op">=</span>[<span class="st">"k"</span>, <span class="st">"p"</span>], <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>)</span>
+<span id="cb15-339"><a href="#cb15-339" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb15-340"><a href="#cb15-340" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cat <span class="kw">in</span> report[<span class="st">"categories"</span>]:</span>
+<span id="cb15-341"><a href="#cb15-341" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cat[<span class="st">"category"</span>] <span class="kw">not</span> <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>):   <span class="co"># skip any no-data class</span></span>
+<span id="cb15-342"><a href="#cb15-342" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb15-343"><a href="#cb15-343" aria-hidden="true" tabindex="-1"></a>    area <span class="op">=</span> <span class="bu">next</span>(u[<span class="st">"value"</span>] <span class="cf">for</span> u <span class="kw">in</span> cat[<span class="st">"units"</span>] <span class="cf">if</span> <span class="st">"kilo"</span> <span class="kw">in</span> u[<span class="st">"unit"</span>])</span>
+<span id="cb15-344"><a href="#cb15-344" aria-hidden="true" tabindex="-1"></a>    pct <span class="op">=</span> <span class="bu">next</span>(u[<span class="st">"value"</span>] <span class="cf">for</span> u <span class="kw">in</span> cat[<span class="st">"units"</span>] <span class="cf">if</span> u[<span class="st">"unit"</span>] <span class="op">==</span> <span class="st">"percent"</span>)</span>
+<span id="cb15-345"><a href="#cb15-345" aria-hidden="true" tabindex="-1"></a>    rows.append({<span class="st">"seen by (towers)"</span>: cat[<span class="st">"category"</span>],</span>
+<span id="cb15-346"><a href="#cb15-346" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"area (km²)"</span>: <span class="bu">round</span>(area, <span class="dv">1</span>), <span class="st">"share of region"</span>: <span class="ss">f"</span><span class="sc">{</span>pct<span class="sc">:.1f}</span><span class="ss">%"</span>})</span>
+<span id="cb15-347"><a href="#cb15-347" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(rows)</span>
+<span id="cb15-348"><a href="#cb15-348" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-349"><a href="#cb15-349" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-350"><a href="#cb15-350" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> seen by (towers) <span class="pp">|</span> area (km²) <span class="pp">|</span> share of region <span class="pp">|</span></span>
+<span id="cb15-351"><a href="#cb15-351" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb15-352"><a href="#cb15-352" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 <span class="pp">|</span> 416.4 <span class="pp">|</span> 26.7% <span class="pp">|</span></span>
+<span id="cb15-353"><a href="#cb15-353" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 2 <span class="pp">|</span> 214.8 <span class="pp">|</span> 13.7% <span class="pp">|</span></span>
+<span id="cb15-354"><a href="#cb15-354" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 3 <span class="pp">|</span> 61.1 <span class="pp">|</span> 3.9% <span class="pp">|</span></span>
+<span id="cb15-355"><a href="#cb15-355" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-356"><a href="#cb15-356" aria-hidden="true" tabindex="-1"></a>The three towers together watch about 692 km², or 44% of this 1,562 km² region. Only</span>
+<span id="cb15-357"><a href="#cb15-357" aria-hidden="true" tabindex="-1"></a>4% is covered by all three at once, along the central ridges where their circles</span>
+<span id="cb15-358"><a href="#cb15-358" aria-hidden="true" tabindex="-1"></a>overlap. We map the coverage with one color per level.</span>
+<span id="cb15-359"><a href="#cb15-359" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-362"><a href="#cb15-362" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-363"><a href="#cb15-363" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"coverage"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 254:224:139</span><span class="ch">\n</span><span class="st">2 252:141:89</span><span class="ch">\n</span><span class="st">3 213:62:79"</span>))</span>
+<span id="cb15-364"><a href="#cb15-364" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-365"><a href="#cb15-365" aria-hidden="true" tabindex="-1"></a>coverage_map <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>)</span>
+<span id="cb15-366"><a href="#cb15-366" aria-hidden="true" tabindex="-1"></a>coverage_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"relief"</span>)</span>
+<span id="cb15-367"><a href="#cb15-367" aria-hidden="true" tabindex="-1"></a>coverage_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"coverage"</span>)</span>
+<span id="cb15-368"><a href="#cb15-368" aria-hidden="true" tabindex="-1"></a>coverage_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>, size<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb15-369"><a href="#cb15-369" aria-hidden="true" tabindex="-1"></a>                    fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-370"><a href="#cb15-370" aria-hidden="true" tabindex="-1"></a>label_towers(coverage_map)</span>
+<span id="cb15-371"><a href="#cb15-371" aria-hidden="true" tabindex="-1"></a>coverage_map.d_legend(raster<span class="op">=</span><span class="st">"coverage"</span>, at<span class="op">=</span>(<span class="dv">5</span>, <span class="dv">20</span>, <span class="dv">90</span>, <span class="dv">93</span>), flags<span class="op">=</span><span class="st">"b"</span>,</span>
+<span id="cb15-372"><a href="#cb15-372" aria-hidden="true" tabindex="-1"></a>                      use<span class="op">=</span>[<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>], fontsize<span class="op">=</span><span class="dv">14</span>, title<span class="op">=</span><span class="st">"towers"</span>)</span>
+<span id="cb15-373"><a href="#cb15-373" aria-hidden="true" tabindex="-1"></a>coverage_map.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb15-374"><a href="#cb15-374" aria-hidden="true" tabindex="-1"></a>coverage_map.show()</span>
+<span id="cb15-375"><a href="#cb15-375" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-376"><a href="#cb15-376" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-377"><a href="#cb15-377" aria-hidden="true" tabindex="-1"></a><span class="al">![Network detection coverage: terrain seen by one tower (yellow), two (orange), or all three (red).](images/coverage.webp)</span></span>
+<span id="cb15-378"><a href="#cb15-378" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-379"><a href="#cb15-379" aria-hidden="true" tabindex="-1"></a><span class="fu"># Where should a fourth tower go?</span></span>
+<span id="cb15-380"><a href="#cb15-380" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-381"><a href="#cb15-381" aria-hidden="true" tabindex="-1"></a>The gap map turns "where should a new tower go?" into a computation. A natural</span>
+<span id="cb15-382"><a href="#cb15-382" aria-hidden="true" tabindex="-1"></a>candidate is the highest summit that no current tower can see, since high ground has</span>
+<span id="cb15-383"><a href="#cb15-383" aria-hidden="true" tabindex="-1"></a>the best chance of a long view. We isolate the blind area, find its highest cell with</span>
+<span id="cb15-384"><a href="#cb15-384" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.stats</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.stats.html)</span>, and test a tower</span>
+<span id="cb15-385"><a href="#cb15-385" aria-hidden="true" tabindex="-1"></a>there.</span>
+<span id="cb15-386"><a href="#cb15-386" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-389"><a href="#cb15-389" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-390"><a href="#cb15-390" aria-hidden="true" tabindex="-1"></a><span class="co"># cells no tower currently see, and their elevation</span></span>
+<span id="cb15-391"><a href="#cb15-391" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"blind = if(isnull(coverage), 1, null())"</span>)</span>
+<span id="cb15-392"><a href="#cb15-392" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"blind_elev = if(isnull(coverage), elevation, null())"</span>)</span>
+<span id="cb15-393"><a href="#cb15-393" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-394"><a href="#cb15-394" aria-hidden="true" tabindex="-1"></a><span class="co"># coordinates of the highest blind cell</span></span>
+<span id="cb15-395"><a href="#cb15-395" aria-hidden="true" tabindex="-1"></a>cells <span class="op">=</span> tools.r_stats(<span class="bu">input</span><span class="op">=</span><span class="st">"blind_elev"</span>, flags<span class="op">=</span><span class="st">"gn"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">"json"</span>).json</span>
+<span id="cb15-396"><a href="#cb15-396" aria-hidden="true" tabindex="-1"></a>peak <span class="op">=</span> <span class="bu">max</span>(cells, key<span class="op">=</span><span class="kw">lambda</span> c: c[<span class="st">"categories"</span>][<span class="dv">0</span>][<span class="st">"category"</span>])</span>
+<span id="cb15-397"><a href="#cb15-397" aria-hidden="true" tabindex="-1"></a>cx, cy, cz <span class="op">=</span> peak[<span class="st">"east"</span>], peak[<span class="st">"north"</span>], peak[<span class="st">"categories"</span>][<span class="dv">0</span>][<span class="st">"category"</span>]</span>
+<span id="cb15-398"><a href="#cb15-398" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"highest blind summit: (</span><span class="sc">{</span>cx<span class="sc">:.0f}</span><span class="ss">, </span><span class="sc">{</span>cy<span class="sc">:.0f}</span><span class="ss">), </span><span class="sc">{</span>cz<span class="sc">:.0f}</span><span class="ss"> m"</span>)</span>
+<span id="cb15-399"><a href="#cb15-399" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-400"><a href="#cb15-400" aria-hidden="true" tabindex="-1"></a><span class="co"># what a 12 m tower there would detect, and how much of the blind area it recovers</span></span>
+<span id="cb15-401"><a href="#cb15-401" aria-hidden="true" tabindex="-1"></a>tools.r_viewshed(<span class="bu">input</span><span class="op">=</span><span class="st">"elevation"</span>, output<span class="op">=</span><span class="st">"detect_new"</span>, coordinates<span class="op">=</span>(cx, cy),</span>
+<span id="cb15-402"><a href="#cb15-402" aria-hidden="true" tabindex="-1"></a>                 observer_elevation<span class="op">=</span><span class="dv">12</span>, target_elevation<span class="op">=</span><span class="dv">15</span>, max_distance<span class="op">=</span><span class="dv">32000</span>,</span>
+<span id="cb15-403"><a href="#cb15-403" aria-hidden="true" tabindex="-1"></a>                 flags<span class="op">=</span><span class="st">"cb"</span>, memory<span class="op">=</span><span class="dv">2000</span>)</span>
+<span id="cb15-404"><a href="#cb15-404" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"recovered = if(isnull(coverage) &amp;&amp; detect_new == 1, 1, null())"</span>)</span>
+<span id="cb15-405"><a href="#cb15-405" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-406"><a href="#cb15-406" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"blind"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span>
+<span id="cb15-407"><a href="#cb15-407" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tools.r_report(<span class="bu">map</span><span class="op">=</span><span class="st">"recovered"</span>, units<span class="op">=</span><span class="st">"k"</span>, flags<span class="op">=</span><span class="st">"n"</span>).text)</span>
+<span id="cb15-408"><a href="#cb15-408" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-409"><a href="#cb15-409" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-410"><a href="#cb15-410" aria-hidden="true" tabindex="-1"></a>The best-placed new tower recovers only about 28 km² of the 870 km² blind area, less</span>
+<span id="cb15-411"><a href="#cb15-411" aria-hidden="true" tabindex="-1"></a>than 4% of it. The gap map shows why: what remains unseen is mostly the valley bottoms</span>
+<span id="cb15-412"><a href="#cb15-412" aria-hidden="true" tabindex="-1"></a>between the ridges, and no ridgetop tower can see down into a ravine. Beyond a handful</span>
+<span id="cb15-413"><a href="#cb15-413" aria-hidden="true" tabindex="-1"></a>of well-sited towers, adding more brings sharply diminishing returns. Fire agencies</span>
+<span id="cb15-414"><a href="#cb15-414" aria-hidden="true" tabindex="-1"></a>eventually turned to aircraft patrols and, later, camera and satellite detection for</span>
+<span id="cb15-415"><a href="#cb15-415" aria-hidden="true" tabindex="-1"></a>exactly this reason.</span>
+<span id="cb15-416"><a href="#cb15-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-419"><a href="#cb15-419" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb15-420"><a href="#cb15-420" aria-hidden="true" tabindex="-1"></a>tools.r_mapcalc(expression<span class="op">=</span><span class="st">"covered_now = if(!isnull(coverage), 1, null())"</span>)</span>
+<span id="cb15-421"><a href="#cb15-421" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"covered_now"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 150:180:200"</span>))</span>
+<span id="cb15-422"><a href="#cb15-422" aria-hidden="true" tabindex="-1"></a>tools.r_colors(<span class="bu">map</span><span class="op">=</span><span class="st">"recovered"</span>, rules<span class="op">=</span>io.StringIO(<span class="st">"1 215:25:28"</span>))</span>
+<span id="cb15-423"><a href="#cb15-423" aria-hidden="true" tabindex="-1"></a>tools.v_in_ascii(<span class="bu">input</span><span class="op">=</span>io.StringIO(<span class="ss">f"</span><span class="sc">{</span>cx<span class="sc">:.0f}</span><span class="ss">,</span><span class="sc">{</span>cy<span class="sc">:.0f}</span><span class="ss">"</span>), output<span class="op">=</span><span class="st">"candidate"</span>,</span>
+<span id="cb15-424"><a href="#cb15-424" aria-hidden="true" tabindex="-1"></a>                 separator<span class="op">=</span><span class="st">"comma"</span>, columns<span class="op">=</span><span class="st">"x double precision, y double precision"</span>,</span>
+<span id="cb15-425"><a href="#cb15-425" aria-hidden="true" tabindex="-1"></a>                 x<span class="op">=</span><span class="dv">1</span>, y<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-426"><a href="#cb15-426" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-427"><a href="#cb15-427" aria-hidden="true" tabindex="-1"></a>site_map <span class="op">=</span> gj.Map(width<span class="op">=</span><span class="dv">600</span>)</span>
+<span id="cb15-428"><a href="#cb15-428" aria-hidden="true" tabindex="-1"></a>site_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"relief"</span>)</span>
+<span id="cb15-429"><a href="#cb15-429" aria-hidden="true" tabindex="-1"></a>site_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"covered_now"</span>)</span>
+<span id="cb15-430"><a href="#cb15-430" aria-hidden="true" tabindex="-1"></a>site_map.d_rast(<span class="bu">map</span><span class="op">=</span><span class="st">"recovered"</span>)</span>
+<span id="cb15-431"><a href="#cb15-431" aria-hidden="true" tabindex="-1"></a>site_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"towers"</span>, icon<span class="op">=</span><span class="st">"basic/triangle"</span>, size<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb15-432"><a href="#cb15-432" aria-hidden="true" tabindex="-1"></a>                fill_color<span class="op">=</span><span class="st">"white"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-433"><a href="#cb15-433" aria-hidden="true" tabindex="-1"></a>site_map.d_vect(<span class="bu">map</span><span class="op">=</span><span class="st">"candidate"</span>, icon<span class="op">=</span><span class="st">"basic/star"</span>, size<span class="op">=</span><span class="dv">18</span>,</span>
+<span id="cb15-434"><a href="#cb15-434" aria-hidden="true" tabindex="-1"></a>                fill_color<span class="op">=</span><span class="st">"yellow"</span>, color<span class="op">=</span><span class="st">"black"</span>, width<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb15-435"><a href="#cb15-435" aria-hidden="true" tabindex="-1"></a>site_map.d_barscale(flags<span class="op">=</span><span class="st">"n"</span>, at<span class="op">=</span>(<span class="dv">2</span>, <span class="dv">6</span>), bgcolor<span class="op">=</span><span class="st">"white"</span>, fontsize<span class="op">=</span><span class="dv">13</span>)</span>
+<span id="cb15-436"><a href="#cb15-436" aria-hidden="true" tabindex="-1"></a>site_map.show()</span>
+<span id="cb15-437"><a href="#cb15-437" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb15-438"><a href="#cb15-438" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-439"><a href="#cb15-439" aria-hidden="true" tabindex="-1"></a><span class="al">![Existing coverage (blue), the candidate fourth tower (star), and the small area it recovers (red). Most gaps are valleys no ridgetop tower can see.](images/site_optimization.webp)</span></span>
+<span id="cb15-440"><a href="#cb15-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-441"><a href="#cb15-441" aria-hidden="true" tabindex="-1"></a><span class="fu"># Summary</span></span>
+<span id="cb15-442"><a href="#cb15-442" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-443"><a href="#cb15-443" aria-hidden="true" tabindex="-1"></a>We have used</span>
+<span id="cb15-444"><a href="#cb15-444" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">r.viewshed</span><span class="co">](https://grass.osgeo.org/grass-stable/manuals/r.viewshed.html)</span> on USGS</span>
+<span id="cb15-445"><a href="#cb15-445" aria-hidden="true" tabindex="-1"></a>elevation data to answer the four questions from the introduction:</span>
+<span id="cb15-446"><a href="#cb15-446" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-447"><a href="#cb15-447" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A 16 m tower sees nearly 70% more terrain than a person standing on the same summit</span>
+<span id="cb15-448"><a href="#cb15-448" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`observer_elevation`</span>).</span>
+<span id="cb15-449"><a href="#cb15-449" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Earth curvature (<span class="in">`-c`</span>) is a small correction in this rugged terrain, where ridges</span>
+<span id="cb15-450"><a href="#cb15-450" aria-hidden="true" tabindex="-1"></a>  rather than the horizon limit the view.</span>
+<span id="cb15-451"><a href="#cb15-451" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A rising smoke column (<span class="in">`target_elevation`</span>) can be detected over far more ground than</span>
+<span id="cb15-452"><a href="#cb15-452" aria-hidden="true" tabindex="-1"></a>  is directly visible.</span>
+<span id="cb15-453"><a href="#cb15-453" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Three towers cover 44% of the forest, and the gaps that remain are valleys where</span>
+<span id="cb15-454"><a href="#cb15-454" aria-hidden="true" tabindex="-1"></a>  even a well-placed fourth tower gains little.</span>
+<span id="cb15-455"><a href="#cb15-455" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-456"><a href="#cb15-456" aria-hidden="true" tabindex="-1"></a>To combine visibility with routes across the terrain, see</span>
+<span id="cb15-457"><a href="#cb15-457" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Modeling Movement in GRASS</span><span class="co">](../modeling_movement/GRASS_movement.qmd)</span>.</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Partially supported by US NSF <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=2303651"><img src="../../../images/logos/NSF_Official_logo_100x100.png" class="img-fluid" alt="NSF" width="45"></a></p>
+</div>   
+    <div class="nav-footer-center">
+<p>Content is dual-licensed under <a href="https://www.gnu.org/licenses/fdl-1.2.html">GFDL-1.2-or-later</a> and <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA-4.0</a></p>
+<div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/OSGeo/grass-tutorials/edit/main/content/tutorials/viewshed/visibility_analysis.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/blob/main/content/tutorials/viewshed/visibility_analysis.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item">
+    <a class="nav-link" href="https://github.com/OSGeo/grass">
+<p><i class="fa-brands fa-github" aria-label="github"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://discourse.osgeo.org/c/grass/62">
+<p><i class="fa-brands fa-discourse" aria-label="discourse"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://gitter.im/grassgis/community">
+<p><i class="fa-brands fa-gitter" aria-label="gitter"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://linkedin.com/company/grass-gis">
+<p><i class="fa-brands fa-linkedin" aria-label="linkedin"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://fosstodon.org/@grassgis">
+<p><i class="fa-brands fa-mastodon" aria-label="mastodon"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://x.com/grassgis">
+<p><i class="fa-brands fa-x-twitter" aria-label="x-twitter"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://www.youtube.com/@grass-gis">
+<p><i class="fa-brands fa-youtube" aria-label="youtube"></i></p>
+</a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>
