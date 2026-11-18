@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Rajveer Bishnoi">
+<meta name="dcterms.date" content="2026-11-17">
+<meta name="description" content="Run GRASS tools from the QGIS Processing Toolbox, and get QGIS to find GRASS on macOS.">
+
+<title>Use GRASS tools in QGIS</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../../images/favicon.ico" rel="icon">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-66c3c909b4863afd39f8c1a9684862f1.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-129134f29a76a6181c5c97a8655f1195.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-66c3c909b4863afd39f8c1a9684862f1.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-a5a503b70e5662003efb455b8fad5639.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-a5a503b70e5662003efb455b8fad5639.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-a5a503b70e5662003efb455b8fad5639.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/quarto-contrib/fontawesome6-0.1.0/all.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-contrib/fontawesome6-0.1.0/latex-fontsize.css" rel="stylesheet">
+<script src="../../../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../../../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<meta property="og:title" content="Use GRASS tools in QGIS">
+<meta property="og:description" content="Run GRASS tools from the QGIS Processing Toolbox, and get QGIS to find GRASS on macOS.">
+<meta property="og:image" content="https://grass-tutorials.osgeo.org/content/tutorials/grass_tools_in_qgis/images/slope_result.webp">
+<meta property="og:image:alt" content="Slope of SRTM.tif. Cells of 30 degrees and steeper are dark red.">
+<meta name="twitter:title" content="Use GRASS tools in QGIS">
+<meta name="twitter:description" content="Run GRASS tools from the QGIS Processing Toolbox, and get QGIS to find GRASS on macOS.">
+<meta name="twitter:image" content="https://grass-tutorials.osgeo.org/content/tutorials/grass_tools_in_qgis/images/slope_result.webp">
+<meta name="twitter:image:alt" content="Slope of SRTM.tif. Cells of 30 degrees and steeper are dark red.">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../../../images/logos/small/grass-logo-white-simple@05x.png" alt="Small sized GRASS icon colored white with GRASS shape" class="navbar-logo light-content">
+    <img src="../../../images/logos/small/grass-logo-white-simple@05x.png" alt="Small sized GRASS icon colored white with GRASS shape" class="navbar-logo dark-content">
+    </a>
+    <a class="navbar-brand" href="../../../index.html">
+    <span class="navbar-title">Learn GRASS</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+    <div class="dropdown">
+      <a href="" title="" id="quarto-navigation-tool-dropdown-0" class="quarto-navigation-tool dropdown-toggle px-1" data-bs-toggle="dropdown" aria-expanded="false" role="link" aria-label=""><i class="bi bi-github"></i></a>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="quarto-navigation-tool-dropdown-0">
+          <li>
+            <a class="dropdown-item quarto-navbar-tools-item" href="https://github.com/OSGeo/grass-tutorials">
+            Source Code
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item quarto-navbar-tools-item" href="https://github.com/OSGeo/grass-tutorials/issues">
+            Report an Issue
+            </a>
+          </li>
+      </ul>
+    </div>
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar"><div class="quarto-margin-header"><div class="margin-header-item">
+<p><a href="https://numfocus.org/donate-to-grass" class="btn btn-outline-support" role="button" data-align="center"><i class="fa-solid fa-heart" aria-label="heart"></i> Support GRASS</a></p>
+</div></div>
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of Contents</h2>
+   
+  <ul>
+  <li><a href="#install-qgis-and-grass" id="toc-install-qgis-and-grass" class="nav-link active" data-scroll-target="#install-qgis-and-grass">Install QGIS and GRASS</a></li>
+  <li><a href="#run-a-grass-tool" id="toc-run-a-grass-tool" class="nav-link" data-scroll-target="#run-a-grass-tool">Run a GRASS tool</a></li>
+  <li><a href="#what-qgis-does-behind-the-scenes" id="toc-what-qgis-does-behind-the-scenes" class="nav-link" data-scroll-target="#what-qgis-does-behind-the-scenes">What QGIS does behind the scenes</a></li>
+  <li><a href="#not-every-grass-tool-is-in-qgis" id="toc-not-every-grass-tool-is-in-qgis" class="nav-link" data-scroll-target="#not-every-grass-tool-is-in-qgis">Not every GRASS tool is in QGIS</a></li>
+  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting">Troubleshooting</a>
+  <ul class="collapse">
+  <li><a href="#grass-not-found-on-macos" id="toc-grass-not-found-on-macos" class="nav-link" data-scroll-target="#grass-not-found-on-macos">GRASS not found on macOS</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/OSGeo/grass-tutorials/edit/main/content/tutorials/grass_tools_in_qgis/grass_tools_in_qgis.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/blob/main/content/tutorials/grass_tools_in_qgis/grass_tools_in_qgis.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Use GRASS tools in QGIS</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">beginner</div>
+    <div class="quarto-category">GUI</div>
+    <div class="quarto-category">QGIS</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Run GRASS tools from the QGIS Processing Toolbox, and get QGIS to find GRASS on macOS.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Rajveer Bishnoi </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 17, 2026</p>
+    </div>
+  </div>
+  
+    <div>
+    <div class="quarto-title-meta-heading">Modified</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date-modified">November 18, 2026</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>QGIS can run GRASS tools from its Processing Toolbox. You pick a layer, fill in a dialog, and QGIS runs GRASS for you in the background. You get GRASS analysis without leaving QGIS or setting up a GRASS project yourself.</p>
+<p>This tutorial shows how to run a GRASS tool on a raster layer, what QGIS does when you click <strong>Run</strong>, and what to do if QGIS does not find GRASS.</p>
+<section id="install-qgis-and-grass" class="level2">
+<h2 class="anchored" data-anchor-id="install-qgis-and-grass">Install QGIS and GRASS</h2>
+<p>You need both programs:</p>
+<ul>
+<li>QGIS from <a href="https://qgis.org/download/" class="uri">https://qgis.org/download/</a>. If you are not sure which version to take, the download page recommends the LTR.</li>
+<li>GRASS from <a href="https://grass.osgeo.org/download/" class="uri">https://grass.osgeo.org/download/</a>.</li>
+</ul>
+<p>On Windows with the OSGeo4W installer, the GRASS download page says you need the <code>qgis*-grass-plugin</code> packages to get GRASS in QGIS Processing. The QGIS app for macOS from the download page does not include GRASS, so install GRASS separately and see <a href="#grass-not-found-on-macos">GRASS not found on macOS</a>. On macOS you can also install QGIS with GRASS support from MacPorts, as described in the <a href="https://www.qgis.org/resources/installation-guide/#macports">QGIS installation guide</a>.</p>
+</section>
+<section id="run-a-grass-tool" class="level2">
+<h2 class="anchored" data-anchor-id="run-a-grass-tool">Run a GRASS tool</h2>
+<p>The GRASS tools are in the Processing Toolbox (<strong>Processing ‣ Toolbox</strong>), under <strong>GRASS</strong>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/qgis_window.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="QGIS with the slope layer and r.slope.aspect in the Processing Toolbox"><img src="images/qgis_window.webp" class="img-fluid figure-img" alt="QGIS with the slope layer and r.slope.aspect in the Processing Toolbox"></a></p>
+<figcaption>QGIS with the slope layer and r.slope.aspect in the Processing Toolbox</figcaption>
+</figure>
+</div>
+<p>This example computes slope from <code>SRTM.tif</code>, the elevation model around Cape Town from the <a href="https://github.com/qgis/QGIS-Training-Data">QGIS training data</a>. Download <a href="https://github.com/qgis/QGIS-Training-Data/raw/master/exercise_data/more_analysis/DEM/SRTM.tif">SRTM.tif</a> and add it with <strong>Layer ‣ Add Layer ‣ Add Raster Layer…</strong>.</p>
+<p>Search for <code>r.slope.aspect</code> in the Processing Toolbox and open it. Choose <code>SRTM</code> as <strong>Elevation</strong>. Leave <strong>Multiplicative factor to convert elevation units to meters</strong> at 1.0, because the elevation is in meters.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/slope_dialog_parameters.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="The r.slope.aspect dialog"><img src="images/slope_dialog_parameters.webp" class="img-fluid figure-img" alt="The r.slope.aspect dialog"></a></p>
+<figcaption>The r.slope.aspect dialog</figcaption>
+</figure>
+</div>
+<p>The tool has nine outputs, and by default QGIS computes all of them and adds each one to the map. To get only the slope:</p>
+<ul>
+<li>Next to <strong>Slope</strong>, click <strong>…</strong> and choose <strong>Save to File…</strong>. Pick the file with the dialog. A path typed by hand with <code>~</code> fails, because QGIS passes it to GRASS as it is.</li>
+<li>For each of the other outputs, click <strong>…</strong> and choose <strong>Skip Output</strong>. QGIS then leaves them out of the GRASS command, so GRASS does not compute them at all.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/slope_dialog_outputs.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Slope saved to a file, the other outputs skipped"><img src="images/slope_dialog_outputs.webp" class="img-fluid figure-img" alt="Slope saved to a file, the other outputs skipped"></a></p>
+<figcaption>Slope saved to a file, the other outputs skipped</figcaption>
+</figure>
+</div>
+<p>Click <strong>Run</strong>. If you run the tool again, check <strong>Elevation</strong> first: after a run, QGIS may select the new slope layer there.</p>
+<p>Most of this area is gentle, so a color ramp from 0 to 30 degrees shows it better than one up to the steepest cell. For the map below, open the layer’s <strong>Properties ‣ Symbology</strong>, choose <strong>Singleband pseudocolor</strong>, set <strong>Min</strong> to 0 and <strong>Max</strong> to 30, and pick the <strong>YlOrRd</strong> color ramp.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/slope_result.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Slope of SRTM.tif. Cells of 30 degrees and steeper are dark red."><img src="images/slope_result.webp" class="preview-image img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%" alt="Slope of SRTM.tif. Cells of 30 degrees and steeper are dark red."></a></p>
+</figure>
+</div>
+<figcaption>Slope of SRTM.tif. Cells of 30 degrees and steeper are dark red.</figcaption>
+</figure>
+</div>
+</section>
+<section id="what-qgis-does-behind-the-scenes" class="level2">
+<h2 class="anchored" data-anchor-id="what-qgis-does-behind-the-scenes">What QGIS does behind the scenes</h2>
+<p>The <strong>Log</strong> tab of the dialog shows the GRASS commands QGIS runs. QGIS creates a temporary GRASS project in the CRS of the layer and gives the maps temporary names. Then it imports the layer, sets the computational region to its extent and resolution, runs the tool and exports the output:</p>
+<pre><code>r.in.gdal input="/Users/Shared/qgis_grass/SRTM.tif" band=1 output="rast_6afb8857b82624" --overwrite -o
+g.region n=-33.454002103 s=-34.374687925 e=18.872219805 w=18.269894211 res=0.0008330921078838172
+r.slope.aspect elevation=rast_6afb8857b82624 format="degrees" precision="FCELL" -a zscale=1 min_slope=0 slope=slopeec7496369fc14332a68c5751f610f9c6 --overwrite
+g.region raster=slopeec7496369fc14332a68c5751f610f9c6
+r.out.gdal -t -m input="slopeec7496369fc14332a68c5751f610f9c6" output="/Users/Shared/qgis_grass/slope.tif" format="GTiff" createopt="TFW=YES,COMPRESS=LZW" --overwrite</code></pre>
+<p>The red <code>ERROR 6</code> line about <code>SetColorTable()</code> in the log is harmless: the file is still written.</p>
+<p>QGIS runs GRASS tools with their default number of threads. To set it yourself, add an <code>OMP_NUM_THREADS</code> variable, for example <code>1</code>, under <strong>Settings ‣ Options… ‣ System ‣ Environment</strong> (see below) and restart QGIS.</p>
+</section>
+<section id="not-every-grass-tool-is-in-qgis" class="level2">
+<h2 class="anchored" data-anchor-id="not-every-grass-tool-is-in-qgis">Not every GRASS tool is in QGIS</h2>
+<p>The toolbox has most GRASS raster, vector and imagery tools. It has no temporal (<code>t.*</code>), 3D raster (<code>r3.*</code>), database (<code>db.*</code>) or display (<code>d.*</code>) tools. GRASS addons you install do not show up either, because QGIS only lists tools it has a description file for. For those, use GRASS itself, for example with the <a href="../../../content/tutorials/get_started/fast_track.html">Get started with GRASS GUI</a> tutorial.</p>
+<p>The QGIS training manual has a <a href="https://docs.qgis.org/latest/en/docs/training_manual/grass/">GRASS module</a> with more examples of GRASS tools in QGIS.</p>
+</section>
+<section id="troubleshooting" class="level2">
+<h2 class="anchored" data-anchor-id="troubleshooting">Troubleshooting</h2>
+<section id="grass-not-found-on-macos" class="level3">
+<h3 class="anchored" data-anchor-id="grass-not-found-on-macos">GRASS not found on macOS</h3>
+<p>If the QGIS app for macOS does not find a separately installed GRASS, the GRASS tools are missing from the Processing Toolbox, or opening one shows “Could not locate GRASS folder. Please make sure that GRASS is correctly installed before running GRASS algorithms.”</p>
+<p>Tell QGIS where GRASS is with the <code>GISBASE</code> variable:</p>
+<ol type="1">
+<li>Open <strong>Settings ‣ Options…</strong> and go to the <strong>System</strong> tab.</li>
+<li>Under <strong>Environment</strong>, check <strong>Use custom variables</strong>.</li>
+<li>Click the green <strong>+</strong> and set <strong>Apply</strong> to <code>Overwrite</code>, <strong>Variable</strong> to <code>GISBASE</code> and <strong>Value</strong> to the <code>Contents/Resources</code> folder of your GRASS app, for example <code>/Applications/GRASS-8.5.app/Contents/Resources</code>.</li>
+<li>Click <strong>OK</strong>, then quit and reopen QGIS.</li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="images/qgis_environment.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="GISBASE and OMP_NUM_THREADS in the QGIS options"><img src="images/qgis_environment.webp" class="img-fluid figure-img" alt="GISBASE and OMP_NUM_THREADS in the QGIS options"></a></p>
+<figcaption>GISBASE and OMP_NUM_THREADS in the QGIS options</figcaption>
+</figure>
+</div>
+<p>Tested on macOS with QGIS 3.44.15, QGIS 4.2.3 and GRASS 8.5.0. Not tested on Windows or Linux.</p>
+
+
+<!-- -->
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
+        for (let i=0; i<cellDetails.length; i++) {
+          const details = cellDetails[i];
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/grass-tutorials\.osgeo\.org");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Use GRASS tools in QGIS"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Rajveer Bishnoi"</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> 2026-11-17</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">date-modified:</span><span class="co"> today</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="an">lightbox:</span><span class="co"> true</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: false</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span><span class="co"> [beginner, GUI, QGIS]</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> Run GRASS tools from the QGIS Processing Toolbox, and get QGIS to find GRASS on macOS.</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="an">execute:</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">  eval: false</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>QGIS can run GRASS tools from its Processing Toolbox. You pick a layer, fill</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>in a dialog, and QGIS runs GRASS for you in the background. You get GRASS</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>analysis without leaving QGIS or setting up a GRASS project yourself.</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>This tutorial shows how to run a GRASS tool on a raster layer, what QGIS does</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>when you click **Run**, and what to do if QGIS does not find GRASS.</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="fu">## Install QGIS and GRASS</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>You need both programs:</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>QGIS from <span class="ot">&lt;https://qgis.org/download/&gt;</span>. If you are not sure which version</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  to take, the download page recommends the LTR.</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>GRASS from <span class="ot">&lt;https://grass.osgeo.org/download/&gt;</span>.</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>On Windows with the OSGeo4W installer, the GRASS download page says you need</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>the <span class="in">`qgis*-grass-plugin`</span> packages to get GRASS in QGIS Processing. The QGIS</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>app for macOS from the download page does not include GRASS, so install GRASS</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>separately and see <span class="co">[</span><span class="ot">GRASS not found on macOS</span><span class="co">](#grass-not-found-on-macos)</span>.</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>On macOS you can also install QGIS with GRASS support from MacPorts, as</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>described in the</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">QGIS installation guide</span><span class="co">](https://www.qgis.org/resources/installation-guide/#macports)</span>.</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="fu">## Run a GRASS tool</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>The GRASS tools are in the Processing Toolbox (**Processing ‣ Toolbox**),</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>under **GRASS**.</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="al">![QGIS with the slope layer and r.slope.aspect in the Processing Toolbox](images/qgis_window.webp)</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>This example computes slope from <span class="in">`SRTM.tif`</span>, the elevation model around</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>Cape Town from the</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">QGIS training data</span><span class="co">](https://github.com/qgis/QGIS-Training-Data)</span>.</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>Download</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">SRTM.tif</span><span class="co">](https://github.com/qgis/QGIS-Training-Data/raw/master/exercise_data/more_analysis/DEM/SRTM.tif)</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>and add it with **Layer ‣ Add Layer ‣ Add Raster Layer…**.</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>Search for <span class="in">`r.slope.aspect`</span> in the Processing Toolbox and open it. Choose</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="in">`SRTM`</span> as **Elevation**. Leave **Multiplicative factor to convert elevation</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>units to meters** at 1.0, because the elevation is in meters.</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="al">![The r.slope.aspect dialog](images/slope_dialog_parameters.webp)</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>The tool has nine outputs, and by default QGIS computes all of them and</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>adds each one to the map. To get only the slope:</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Next to **Slope**, click **…** and choose **Save to File…**. Pick the file</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>  with the dialog. A path typed by hand with <span class="in">`~`</span> fails, because QGIS passes</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>  it to GRASS as it is.</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>For each of the other outputs, click **…** and choose **Skip Output**.</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>  QGIS then leaves them out of the GRASS command, so GRASS does not compute</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>  them at all.</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="al">![Slope saved to a file, the other outputs skipped](images/slope_dialog_outputs.webp)</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>Click **Run**. If you run the tool again, check **Elevation** first: after a</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>run, QGIS may select the new slope layer there.</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>Most of this area is gentle, so a color ramp from 0 to 30 degrees shows it</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>better than one up to the steepest cell. For the map below, open the layer's</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>**Properties ‣ Symbology**, choose **Singleband pseudocolor**, set **Min**</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>to 0 and **Max** to 30, and pick the **YlOrRd** color ramp.</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="al">![Slope of SRTM.tif. Cells of 30 degrees and steeper are dark red.](images/slope_result.webp)</span>{.preview-image width=70% fig-align="center"}</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="fu">## What QGIS does behind the scenes</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>The **Log** tab of the dialog shows the GRASS commands QGIS runs. QGIS</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>creates a temporary GRASS project in the CRS of the layer and gives the maps</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>temporary names. Then it imports the layer, sets the computational region to</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>its extent and resolution, runs the tool and exports the output:</span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="in">r.in.gdal input="/Users/Shared/qgis_grass/SRTM.tif" band=1 output="rast_6afb8857b82624" --overwrite -o</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="in">g.region n=-33.454002103 s=-34.374687925 e=18.872219805 w=18.269894211 res=0.0008330921078838172</span></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="in">r.slope.aspect elevation=rast_6afb8857b82624 format="degrees" precision="FCELL" -a zscale=1 min_slope=0 slope=slopeec7496369fc14332a68c5751f610f9c6 --overwrite</span></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="in">g.region raster=slopeec7496369fc14332a68c5751f610f9c6</span></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="in">r.out.gdal -t -m input="slopeec7496369fc14332a68c5751f610f9c6" output="/Users/Shared/qgis_grass/slope.tif" format="GTiff" createopt="TFW=YES,COMPRESS=LZW" --overwrite</span></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>The red <span class="in">`ERROR 6`</span> line about <span class="in">`SetColorTable()`</span> in the log is harmless: the</span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>file is still written.</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>QGIS runs GRASS tools with their default number of threads. To set it</span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>yourself, add an <span class="in">`OMP_NUM_THREADS`</span> variable, for example <span class="in">`1`</span>, under</span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>**Settings ‣ Options… ‣ System ‣ Environment** (see below) and restart QGIS.</span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="fu">## Not every GRASS tool is in QGIS</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>The toolbox has most GRASS raster, vector and imagery tools. It has no</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>temporal (<span class="in">`t.*`</span>), 3D raster (<span class="in">`r3.*`</span>), database (<span class="in">`db.*`</span>) or display (<span class="in">`d.*`</span>)</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>tools. GRASS addons you install do not show up either, because QGIS only</span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a>lists tools it has a description file for. For those, use GRASS itself,</span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>for example with the</span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Get started with GRASS GUI</span><span class="co">](../get_started/fast_track.qmd)</span> tutorial.</span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>The QGIS training manual has a</span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">GRASS module</span><span class="co">](https://docs.qgis.org/latest/en/docs/training_manual/grass/)</span></span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>with more examples of GRASS tools in QGIS.</span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a><span class="fu">## Troubleshooting</span></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a><span class="fu">### GRASS not found on macOS</span></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>If the QGIS app for macOS does not find a separately installed GRASS, the</span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a>GRASS tools are missing from the Processing Toolbox, or opening one shows</span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>"Could not locate GRASS folder. Please make sure that GRASS is correctly</span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>installed before running GRASS algorithms."</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>Tell QGIS where GRASS is with the <span class="in">`GISBASE`</span> variable:</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Open **Settings ‣ Options…** and go to the **System** tab.</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Under **Environment**, check **Use custom variables**.</span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Click the green **+** and set **Apply** to `Overwrite`, **Variable** to</span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>   <span class="in">`GISBASE`</span> and **Value** to the <span class="in">`Contents/Resources`</span> folder of your GRASS</span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>   app, for example <span class="in">`/Applications/GRASS-8.5.app/Contents/Resources`</span>.</span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Click **OK**, then quit and reopen QGIS.</span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a><span class="al">![GISBASE and OMP_NUM_THREADS in the QGIS options](images/qgis_environment.webp)</span></span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>Tested on macOS with QGIS 3.44.15, QGIS 4.2.3 and GRASS 8.5.0. Not tested</span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>on Windows or Linux.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Partially supported by US NSF <a href="https://www.nsf.gov/awardsearch/showAward?AWD_ID=2303651"><img src="../../../images/logos/NSF_Official_logo_100x100.png" class="img-fluid" alt="NSF" width="45"></a></p>
+</div>   
+    <div class="nav-footer-center">
+<p>Content is dual-licensed under <a href="https://www.gnu.org/licenses/fdl-1.2.html">GFDL-1.2-or-later</a> and <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA-4.0</a></p>
+<div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/OSGeo/grass-tutorials/edit/main/content/tutorials/grass_tools_in_qgis/grass_tools_in_qgis.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/blob/main/content/tutorials/grass_tools_in_qgis/grass_tools_in_qgis.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/OSGeo/grass-tutorials/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item">
+    <a class="nav-link" href="https://github.com/OSGeo/grass">
+<p><i class="fa-brands fa-github" aria-label="github"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://discourse.osgeo.org/c/grass/62">
+<p><i class="fa-brands fa-discourse" aria-label="discourse"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://gitter.im/grassgis/community">
+<p><i class="fa-brands fa-gitter" aria-label="gitter"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://linkedin.com/company/grass-gis">
+<p><i class="fa-brands fa-linkedin" aria-label="linkedin"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://fosstodon.org/@grassgis">
+<p><i class="fa-brands fa-mastodon" aria-label="mastodon"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://x.com/grassgis">
+<p><i class="fa-brands fa-x-twitter" aria-label="x-twitter"></i></p>
+</a>
+  </li>  
+    <li class="nav-item">
+    <a class="nav-link" href="https://www.youtube.com/@grass-gis">
+<p><i class="fa-brands fa-youtube" aria-label="youtube"></i></p>
+</a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>
